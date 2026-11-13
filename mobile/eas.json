@@ -1,0 +1,7 @@
+{
+  "cli": { "version": ">= 12.0.0" },
+  "build": {
+    "apk": { "environment": "preview", "android": { "buildType": "apk" }, "distribution": "internal" },
+    "production": { "environment": "production", "android": { "buildType": "app-bundle" }, "autoIncrement": true }
+  }
+}

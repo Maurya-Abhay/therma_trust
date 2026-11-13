@@ -1,0 +1,42 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Python / Django
+**/__pycache__/
+*.py[cod]
+*.sqlite3
+backend/.venv/
+backend/venv/
+backend/media/
+backend/staticfiles/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js / Expo
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/build/
+**/.expo/
+**/.expo-shared/
+**/web-build/
+**/coverage/
+**/*.tsbuildinfo
+server/uploads/
+
+# Editors, OS and logs
+.vscode/
+.idea/
+.DS_Store
+*.log
+npm-debug.log*
+
+# Git local metadata is not part of the delivered ZIP
+.git/

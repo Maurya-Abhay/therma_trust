@@ -1,0 +1,107 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =================================
+   GLOBAL BASE STYLES
+================================= */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    @apply bg-surface-50 text-surface-900 font-sans;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+
+  ::selection {
+    background-color: #CCFBF1;
+    color: #134E4A;
+  }
+
+  :focus-visible {
+    outline: 2px solid #0F766E;
+    outline-offset: 3px;
+  }
+}
+
+/* =================================
+   GLOBAL COMPONENT UTILITIES
+================================= */
+
+@layer components {
+  .app-card {
+    @apply bg-white rounded-2xl border border-surface-200;
+  }
+
+  .app-heading {
+    @apply text-xl font-bold text-surface-900;
+  }
+
+  .app-subheading {
+    @apply text-sm text-surface-500;
+  }
+
+  .app-muted {
+    @apply text-surface-500;
+  }
+
+  .app-primary {
+    @apply text-teal-700;
+  }
+
+  .app-divider {
+    @apply border-t border-surface-200;
+  }
+}
+
+/* =================================
+   GLOBAL SCROLLBAR
+================================= */
+
+@layer utilities {
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+}

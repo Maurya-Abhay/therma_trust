@@ -1,0 +1,51 @@
+/* Recolors Django Admin's default palette to match the app's teal brand,
+   via the CSS custom properties Django's own admin/css/base.css defines.
+   No template/layout hacking — just the theme tokens Django already exposes. */
+:root {
+  --primary: #157F79;
+  --secondary: #0E5C58;
+  --accent: #4A9E99;
+  --primary-fg: #fff;
+
+  --header-color: #fff;
+  --header-branding-color: #fff;
+
+  --link-fg: #0E5C58;
+  --link-hover-color: #157F79;
+  --link-selected-fg: #157F79;
+
+  --button-bg: #157F79;
+  --button-hover-bg: #0E5C58;
+  --default-button-bg: #0E5C58;
+  --default-button-hover-bg: #157F79;
+
+  --object-tools-bg: #157F79;
+  --object-tools-hover-bg: #0E5C58;
+
+  --selected-bg: #E3EEEC;
+  --selected-row: #FBF3E2;
+}
+
+#header {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.module h2, .module caption, .inline-group h2 {
+  border-radius: 6px 6px 0 0;
+}
+
+.button, input[type="submit"], input[type="button"], .submit-row input, a.button {
+  border-radius: 6px;
+}
+
+.object-tools a.addlink, .object-tools a {
+  border-radius: 6px;
+}
+
+#changelist-filter {
+  border-radius: 6px;
+}
+
+.dashboard #content {
+  width: auto;
+}

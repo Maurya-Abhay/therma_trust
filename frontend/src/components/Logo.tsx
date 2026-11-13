@@ -1,0 +1,47 @@
+import { Box, Typography } from "@mui/material";
+import { L } from "../screens/landing/tokens";
+
+/**
+ * The ThermaTrust shield-and-check mark: navy "T" shield with a teal tick on a white tile.
+ * `framed` is the paper-and-ink treatment used on light pages: a solid ink outline and a hard offset shadow,
+ * like a stamped label. Otherwise the tile just gets a faint edge so it sits on dark surfaces.
+ */
+export function LogoMark({ size = 36, framed = false }: { size?: number; framed?: boolean }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 36 36"
+      fill="none"
+      aria-hidden
+      style={framed ? { filter: `drop-shadow(${Math.max(2, size / 12)}px ${Math.max(2, size / 12)}px 0 ${L.heat})`, overflow: "visible" } : undefined}
+    >
+      <rect x={framed ? 1 : 0.5} y={framed ? 1 : 0.5} width={framed ? 34 : 35} height={framed ? 34 : 35} rx={framed ? 7 : 7.5} fill="#fff" stroke={framed ? L.ink : "rgba(15,23,42,0.14)"} strokeWidth={framed ? 2 : 1} />
+      <path transform="matrix(1,0,0,-1,6,32.285158)" d="M12.116524 28.835938C12.302339 28.830752 23.102618 24.081906 23.999766 23.668263L23.99851 15.002491 23.181309 15.366021C22.389973 14.950361 21.79815 14.257195 21.181986 13.612006 21.1708 14.539451 21.17713 15.478303 21.17653 16.406785 19.765103 16.43353 18.28726 16.41279 16.87065 16.40897L16.859135 9.436569C15.891316 8.481176 14.931792 7.517544 13.980508 6.545721 13.818105 10.718376 13.904928 15.28753 13.903236 19.48682L21.162178 19.483929 21.159993 21.750657C18.159672 23.094853 15.145656 24.408265 12.118432 25.690728 9.047388 24.46001 5.94502 23.082955 2.895531 21.781006L2.892421 19.490532 9.303818 19.489823 10.251336 19.482184C10.269072 15.06461 10.259795 10.646925 10.223669 6.229406 9.231075 7.040585 8.227294 7.913008 7.245668 8.743019 7.256255 9.569319 7.20474 10.428476 7.197701 11.26149L7.19208 16.409512C5.760516 16.417702 4.328951 16.4171 2.897442 16.407769 2.888983 14.864882 2.81815 13.282643 3.105903 11.766832 3.787333 8.177359 6.264643 5.92313 9.147144 3.960983 8.105709 2.839436 8.282957 2.766951 9.152985 1.473736 9.479865 .987879 9.8432 .483791 10.175428 .000391 5.218352 2.647902 .67667 6.510134 .09718 12.486038-.037775 13.877942 .006919 15.283601 .007737 16.681672L.001352 23.690972 12.116524 28.835938Z" fill="#0f172a" />
+      <path transform="matrix(1,0,0,-1,16.123047,32.90039)" d="M12.899358 13.949219 13.876509 13.106651 13.877055 10.5765C12.391684 9.136835 11.383317 7.370811 9.971017 5.955819 8.0595 4.040669 5.727621 2.244676 3.659757 .49317 3.456316 .320847 3.049979 .0006 2.792022 .059879 2.177824 .200925 1.566628 .991144 1.226213 1.481914 .810545 2.1378 .402135 2.838173 0 3.505359 .681648 4.153876 1.406461 4.920024 2.073156 5.595343 2.532973 5.145785 3.001739 4.705505 3.479182 4.274725 6.609818 7.530633 9.779036 10.652645 12.899358 13.949219Z" fill="#0d9488" />
+    </svg>
+  );
+}
+
+export function Logo({ size = 36, light = false }: { size?: number; light?: boolean }) {
+  return (
+    <Box display="inline-flex" alignItems="center" gap={size >= 34 ? 1.5 : 1.25}>
+      <LogoMark size={size} framed={!light} />
+      <Typography
+        component="span"
+        sx={{
+          // The name has its own typeface: condensed, heavy, signage-style capitals.
+          fontFamily: 'var(--font-wordmark), "Big Shoulders", Impact, "Arial Narrow", sans-serif',
+          fontWeight: 900,
+          fontSize: size * 0.74,
+          letterSpacing: "0.045em",
+          textTransform: "uppercase",
+          color: light ? "#fff" : L.ink,
+          lineHeight: 1,
+        }}
+      >
+        Therma<Box component="span" sx={{ color: L.heat }}>Trust</Box>
+      </Typography>
+    </Box>
+  );
+}
