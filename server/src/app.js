@@ -35,6 +35,10 @@ export function createApp() {
   );
   app.use(express.json({ limit: "1mb" }));
 
+  app.get("/", (_req, res) => {
+    res.json({ service: "ThermaTrust API", status: "ok", health: "/api/health" });
+  });
+
   // Evidence files are not public static assets. Presenters issue short-lived,
   // path-bound signatures only after the caller has passed the relevant API scope.
   // This lets native image/document viewers load files without exposing /uploads.

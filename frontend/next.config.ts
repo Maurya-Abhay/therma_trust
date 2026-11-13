@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 // Map one shared backend URL into a browser-visible Next.js environment variable.
 const apiBase = process.env.THERMATRUST_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
 
+if (process.env.NODE_ENV === "production" && /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:|\/|$)/i.test(apiBase)) {
+  throw new Error("Production frontend builds require THERMATRUST_API_BASE_URL to point to the deployed HTTPS API.");
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Pin the project root so a stray lockfile in a parent folder is not picked up.
