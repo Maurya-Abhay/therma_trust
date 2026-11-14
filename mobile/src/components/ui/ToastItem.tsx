@@ -83,6 +83,8 @@ export const ToastItem = ({
     <Animated.View
       accessibilityRole="alert"
       style={{
+        width: '100%',
+        maxWidth: 460,
         opacity: fadeAnim,
         transform: [{ translateY: slideAnim }],
         flexDirection: 'row',

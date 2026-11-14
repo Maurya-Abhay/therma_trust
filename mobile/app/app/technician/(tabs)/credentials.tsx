@@ -56,9 +56,10 @@ export default function TechnicianCredentialsScreen() {
   const renderCredential = ({ item }: { item: Credential }) => {
     const expired = isExpired(item);
     return (
+      <View style={{ width: '100%', paddingHorizontal: 18, marginBottom: 10 }}>
       <Surface
-        onPress={() => router.push(`/app/technician/credentials/${item.id}` as any)}
-        style={{ marginHorizontal: 18, marginBottom: 10, padding: 14 }}
+        onPress={() => router.push({ pathname: '/app/technician/credentials/[id]', params: { id: String(item.id) } })}
+        style={{ width: '100%', padding: 14 }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <IconBadge Icon={FileBadge} tone={expired ? 'bad' : toneFor(item.effective_status)} size={42} />
@@ -76,6 +77,7 @@ export default function TechnicianCredentialsScreen() {
           {item.ai_check?.flags.length ? <Pill text={`${item.ai_check.flags.length} document flag${item.ai_check.flags.length === 1 ? '' : 's'}`} tone="warn" /> : null}
         </View>
       </Surface>
+      </View>
     );
   };
 

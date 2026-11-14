@@ -14,7 +14,7 @@ import { useTheme } from '@/src/theme/ThemeProvider';
 
 export default function CapabilityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const capabilityId = Number(id);
+  const capabilityId = Number(Array.isArray(id) ? id[0] : id);
   const { user } = useAuth();
   const { t } = useTheme();
   const queryClient = useQueryClient();
@@ -76,7 +76,7 @@ export default function CapabilityDetailScreen() {
         </Surface>
 
         <Section title="Capability details" />
-        <Surface style={{ gap: 13 }}>
+        <Surface style={{ paddingVertical: 4 }}>
           {[
             ['Technician', capability.technician_name],
             ['Category', category || 'Not specified'],
@@ -86,10 +86,10 @@ export default function CapabilityDetailScreen() {
               ['Verified by', capability.verified_by ? `User #${capability.verified_by}` : '—'],
               ['Verified date', format(new Date(capability.verified_at), 'd MMM yyyy, h:mm a')],
             ] : []),
-          ].map(([label, value]) => (
-            <View key={label} style={{ gap: 3 }}>
-              <Text style={{ color: t.sub, fontSize: 10, fontWeight: '800', letterSpacing: 0.7, textTransform: 'uppercase' }}>{label}</Text>
-              <Text style={{ color: t.text, fontSize: 13, lineHeight: 19 }}>{value}</Text>
+          ].map(([label, value], index, rows) => (
+            <View key={label} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12, borderBottomWidth: index === rows.length - 1 ? 0 : 1, borderBottomColor: t.line }}>
+              <Text style={{ width: '36%', color: t.sub, fontSize: 10, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</Text>
+              <Text style={{ flex: 1, color: t.text, fontSize: 13, lineHeight: 18, textAlign: 'right' }}>{value}</Text>
             </View>
           ))}
         </Surface>

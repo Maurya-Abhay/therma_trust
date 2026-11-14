@@ -3,7 +3,7 @@ import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, RefreshCont
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ClipboardList, Plus, Wrench } from 'lucide-react-native';
 import { format, isValid, parseISO } from 'date-fns';
-import { createWorkHistory, fetchRefrigerantTypes, fetchWorkHistory } from '@/src/api/endpoints';
+import { createWorkHistory, fetchChoices, fetchRefrigerantTypes, fetchWorkHistory } from '@/src/api/endpoints';
 import { RefrigerantType, WorkHistoryEntry } from '@/src/types/api';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { Button } from '@/src/components/ui/Button';
@@ -43,6 +43,11 @@ export default function WorkHistoryScreen() {
   const refrigerantsQuery = useQuery({
     queryKey: ['refrigerant-types'],
     queryFn: fetchRefrigerantTypes,
+    staleTime: 300000,
+  });
+  const choicesQuery = useQuery({
+    queryKey: ['choices'],
+    queryFn: fetchChoices,
     staleTime: 300000,
   });
   const history = historyQuery.data ?? [];
@@ -128,7 +133,27 @@ export default function WorkHistoryScreen() {
                 <>
                   <Section title="New work entry" />
                   <Surface style={{ gap: 12 }}>
-                    <Input label="Equipment category *" placeholder="e.g. Chiller, VRF, split system" value={form.equipment_category} onChangeText={(value) => setForm((current) => ({ ...current, equipment_category: value }))} />
+                    <View>
+                      <Text style={{ color: t.sub, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>Equipment category *</Text>
+                      {choicesQuery.isLoading ? <State loading /> : choicesQuery.isError ? (
+                        <State error onRetry={() => { void choicesQuery.refetch(); }} />
+                      ) : (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
+                          {(choicesQuery.data?.equipment_categories ?? []).map((item) => {
+                            const active = form.equipment_category === item.value;
+                            return (
+                              <Pressable
+                                key={item.value}
+                                onPress={() => setForm((current) => ({ ...current, equipment_category: item.value }))}
+                                style={{ paddingHorizontal: 11, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: active ? t.primary : t.line, backgroundColor: active ? t.tint : t.card }}
+                              >
+                                <Text style={{ color: active ? t.primary : t.sub, fontSize: 11, fontWeight: '700' }}>{item.label}</Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      )}
+                    </View>
                     <View>
                       <Text style={{ color: t.sub, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>Refrigerant type</Text>
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>

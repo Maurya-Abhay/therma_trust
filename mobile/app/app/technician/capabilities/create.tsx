@@ -8,7 +8,8 @@ import { getApiErrorMessage } from '@/src/api/errorMessage';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
-import { State, Surface } from '@/src/components/ui/kit';
+import { IconBadge, State, Surface } from '@/src/components/ui/kit';
+import { Tags } from 'lucide-react-native';
 import { useTheme } from '@/src/theme/ThemeProvider';
 
 type CapabilityType = CapabilitySkill['capability_type'];
@@ -67,14 +68,21 @@ export default function CreateCapabilityScreen() {
   return (
     <ScreenContainer headerTitle="Declare capability" showProfile={false}>
       <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
-        <Surface style={{ gap: 16 }}>
-          <Text style={{ color: t.sub, fontSize: 13, lineHeight: 19 }}>
+        <Surface style={{ gap: 12, padding: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <IconBadge Icon={Tags} size={40} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.text, fontSize: 17, fontWeight: '800' }}>Declare a capability</Text>
+              <Text style={{ color: t.sub, fontSize: 11, marginTop: 2 }}>Select a skill to add to your profile.</Text>
+            </View>
+          </View>
+          <Text style={{ color: t.sub, fontSize: 12, lineHeight: 17 }}>
             Choose a skill you can perform. New capabilities are submitted as pending until a reviewer verifies them.
           </Text>
 
           <View style={{ gap: 8 }}>
             <Text style={{ color: t.sub, fontSize: 12, fontWeight: '700' }}>Capability type</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'row', gap: 7 }}>
               {TYPES.map((item) => {
                 const active = capabilityType === item.value;
                 return (
@@ -83,7 +91,7 @@ export default function CreateCapabilityScreen() {
                     accessibilityRole="button"
                     accessibilityState={{ selected: active }}
                     onPress={() => { setCapabilityType(item.value); setSelectedValue(''); }}
-                    style={{ borderWidth: 1, borderColor: active ? t.primary : t.line, backgroundColor: active ? t.tint : t.card, borderRadius: 99, paddingHorizontal: 13, paddingVertical: 9 }}
+                    style={{ flex: 1, alignItems: 'center', borderWidth: 1, borderColor: active ? t.primary : t.line, backgroundColor: active ? t.tint : t.card, borderRadius: 12, paddingHorizontal: 7, paddingVertical: 10 }}
                   >
                     <Text style={{ color: active ? t.primary : t.sub, fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
                   </Pressable>
@@ -97,7 +105,7 @@ export default function CreateCapabilityScreen() {
             {optionsLoading ? <State loading /> : optionsError ? (
               <State error onRetry={() => { void (capabilityType === 'refrigerant' ? refrigerants.refetch() : choices.refetch()); }} />
             ) : options.length ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <View style={{ gap: 7 }}>
                 {options.map((item) => {
                   const active = selectedValue === item.value;
                   return (
@@ -106,7 +114,7 @@ export default function CreateCapabilityScreen() {
                       accessibilityRole="button"
                       accessibilityState={{ selected: active }}
                       onPress={() => setSelectedValue(item.value)}
-                      style={{ borderWidth: 1, borderColor: active ? t.primary : t.line, backgroundColor: active ? t.tint : t.card, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 }}
+                      style={{ borderWidth: 1, borderColor: active ? t.primary : t.line, backgroundColor: active ? t.tint : t.card, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}
                     >
                       <Text style={{ color: active ? t.primary : t.text, fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
                     </Pressable>

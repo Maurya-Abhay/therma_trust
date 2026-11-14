@@ -12,6 +12,7 @@ import {
   View,
   StyleSheet,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ToastItem } from "./ToastItem";
 
@@ -40,6 +41,7 @@ export function ToastProvider({
 }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const insets = useSafeAreaInsets();
 
   const show = useCallback(
     (
@@ -81,7 +83,7 @@ export function ToastProvider({
 
       <View
         pointerEvents="box-none"
-        style={styles.container}
+        style={[styles.container, { top: Math.max(insets.top + 24, 64) }]}
       >
         {toasts.map((toast) => (
           <ToastItem
@@ -110,7 +112,6 @@ export function useToast() {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    top: 12,
     left: 16,
     right: 16,
     zIndex: 9999,

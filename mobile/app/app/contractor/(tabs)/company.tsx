@@ -28,6 +28,7 @@ const DOCUMENT_TYPES = [
 ];
 
 type PickedFile = { uri: string; name: string; mimeType?: string | null; size?: number };
+const MAX_DOCUMENT_BYTES = 1024 * 1024;
 const CONTRACTOR_ROUTES = {
   roster: '/app/contractor/roster',
   capabilities: '/app/contractor/capabilities',
@@ -115,9 +116,9 @@ export default function ContractorCompanyHome() {
       });
       if (!result.canceled) {
         const asset = result.assets[0];
-        if (asset.size && asset.size > 5 * 1024 * 1024) {
+        if (asset.size && asset.size > MAX_DOCUMENT_BYTES) {
           setPickedFile(null);
-          Alert.alert('File too large', 'Choose a PDF or image smaller than 5 MB.');
+          Alert.alert('File too large', 'Choose a PDF or image smaller than 1 MB.');
           return;
         }
         setPickedFile({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType, size: asset.size });
@@ -303,7 +304,7 @@ function DocumentUploadModal({
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.text, fontSize: 17, fontWeight: '800' }}>Upload company document</Text>
-              <Text style={{ color: t.sub, fontSize: 12, marginTop: 3 }}>PDF or image, maximum 5 MB.</Text>
+              <Text style={{ color: t.sub, fontSize: 12, marginTop: 3 }}>PDF or image, maximum 1 MB.</Text>
             </View>
             <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
               <X size={20} color={t.sub} />

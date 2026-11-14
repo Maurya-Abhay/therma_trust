@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { Alert } from 'react-native';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BadgeCheck, Building2, Clock3, MapPin, Timer, Users } from 'lucide-react-native';
-import { fetchContractors } from '@/src/api/endpoints';
+import { fetchContractors, verifyContractorCompany } from '@/src/api/endpoints';
 import { ContractorCompany } from '@/src/types/api';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { StatusChip } from '@/src/components/ui/Chip';
 import { IconBadge, PortalHero, Section, State, Stat, Surface } from '@/src/components/ui/kit';
 import { useTheme } from '@/src/theme/ThemeProvider';
+import { Button } from '@/src/components/ui/Button';
 
 const FILTERS = [
   { label: 'All', value: 'all' },
@@ -18,6 +20,7 @@ const FILTERS = [
 
 export default function ContractorVerificationsReviewScreen() {
   const { t } = useTheme();
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const {
     data: contractors = [],
@@ -37,6 +40,16 @@ export default function ContractorVerificationsReviewScreen() {
   const pendingCount = contractors.filter((item) => item.verification_status === 'pending').length;
   const verifiedCount = contractors.filter((item) => item.verification_status === 'verified').length;
   const showLoadError = isError && contractors.length === 0;
+  const reviewMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => verifyContractorCompany(id, status),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-contractors'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] }),
+      ]);
+    },
+    onError: (error: any) => Alert.alert('Action failed', error.response?.data?.detail || 'Could not update this company.'),
+  });
 
   const renderContractor = ({ item }: { item: ContractorCompany }) => (
     <Surface style={{ marginHorizontal: 18, marginBottom: 12, padding: 14 }}>
@@ -48,7 +61,7 @@ export default function ContractorVerificationsReviewScreen() {
             Registration {item.registration_number || 'not provided'}
           </Text>
         </View>
-        <StatusChip status={item.verification_status} size="sm" />
+        <StatusChip status={item.verification_status} size="xs" />
       </View>
 
       <View style={{ height: 1, backgroundColor: t.line, marginVertical: 13 }} />
@@ -80,6 +93,12 @@ export default function ContractorVerificationsReviewScreen() {
           {item.response_time_commitment || 'Not specified'}
         </Text>
       </View>
+      {item.verification_status === 'pending' ? (
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          <Button size="sm" style={{ flex: 1 }} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, status: 'verified' })}>Verify</Button>
+          <Button size="sm" variant="danger" style={{ flex: 1 }} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, status: 'rejected' })}>Reject</Button>
+        </View>
+      ) : null}
     </Surface>
   );
 

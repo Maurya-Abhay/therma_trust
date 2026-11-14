@@ -27,7 +27,11 @@ export default {
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     updates: {
+      url: 'https://u.expo.dev/0983d2eb-9d52-40fe-894a-d533f0eb20ab',
       fallbackToCacheTimeout: 0,
+    },
+    runtimeVersion: {
+      policy: 'appVersion',
     },
     assetBundlePatterns: ['**/*'],
     icon: './assets/icon.png',

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 import { AlertCircle, CalendarDays, Clock3, FileCheck2, Users } from 'lucide-react-native';
-import { fetchAllCredentials } from '@/src/api/endpoints';
+import { fetchAllCredentials, verifyCredential } from '@/src/api/endpoints';
 import { Credential } from '@/src/types/api';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { Chip, StatusChip } from '@/src/components/ui/Chip';
 import { IconBadge, PortalHero, Section, State, Stat, Surface } from '@/src/components/ui/kit';
 import { useTheme } from '@/src/theme/ThemeProvider';
+import { Button } from '@/src/components/ui/Button';
+import { DocumentPreviewModal } from '@/src/components/admin/DocumentPreviewModal';
 
 const FILTERS = [
   { label: 'All', value: 'all' },
@@ -22,7 +25,9 @@ const FILTERS = [
 
 export default function CredentialsReviewScreen() {
   const { t } = useTheme();
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [previewCredential, setPreviewCredential] = useState<Credential | null>(null);
   const {
     data: credentials = [],
     isLoading,
@@ -43,6 +48,16 @@ export default function CredentialsReviewScreen() {
     (item) => !!item.expiry_date && new Date(item.expiry_date).getTime() < Date.now(),
   ).length;
   const showLoadError = isError && credentials.length === 0;
+  const reviewMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => verifyCredential(id, status),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-credentials'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] }),
+      ]);
+    },
+    onError: (error: any) => Alert.alert('Action failed', error.response?.data?.detail || 'Could not update this credential.'),
+  });
 
   const renderCredential = ({ item }: { item: Credential }) => {
     const expired = !!item.expiry_date && new Date(item.expiry_date).getTime() < Date.now();
@@ -59,7 +74,7 @@ export default function CredentialsReviewScreen() {
               <Text numberOfLines={1} style={{ flex: 1, color: t.sub, fontSize: 11 }}>{item.technician_name}</Text>
             </View>
           </View>
-          <StatusChip status={item.effective_status} size="sm" />
+          <StatusChip status={item.effective_status} size="xs" />
         </View>
 
         <View style={{ height: 1, backgroundColor: t.line, marginVertical: 13 }} />
@@ -97,6 +112,31 @@ export default function CredentialsReviewScreen() {
               ))}
             </View>
           </View>
+        ) : null}
+        <Button
+          size="sm"
+          variant="outline"
+          style={{ marginTop: 12 }}
+          disabled={!item.file}
+          onPress={() => setPreviewCredential(item)}
+          leftIcon={<FileCheck2 size={15} color={t.primary} />}
+        >
+          View document
+        </Button>
+        {item.effective_status === 'pending' ? (
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+            <Button size="sm" style={{ flex: 1 }} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, status: 'platform_verified' })}>Verify</Button>
+            <Button size="sm" variant="danger" style={{ flex: 1 }} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, status: 'rejected' })}>Reject</Button>
+          </View>
+        ) : ['document_verified', 'issuer_confirmed'].includes(item.effective_status) ? (
+          <Button
+            size="sm"
+            style={{ marginTop: 12 }}
+            loading={reviewMutation.isPending}
+            onPress={() => reviewMutation.mutate({ id: item.id, status: 'platform_verified' })}
+          >
+            Add to passport
+          </Button>
         ) : null}
       </Surface>
     );
@@ -183,6 +223,12 @@ export default function CredentialsReviewScreen() {
             </View>
           ) : undefined
         }
+      />
+      <DocumentPreviewModal
+        visible={!!previewCredential}
+        title={previewCredential?.name || 'Credential document'}
+        file={previewCredential?.file}
+        onClose={() => setPreviewCredential(null)}
       />
     </ScreenContainer>
   );

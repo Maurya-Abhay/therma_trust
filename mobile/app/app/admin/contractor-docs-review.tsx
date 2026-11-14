@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 import { Building2, CalendarDays, Clock3, FileText } from 'lucide-react-native';
-import { fetchAllContractorDocuments } from '@/src/api/endpoints';
+import { fetchAllContractorDocuments, verifyContractorDocument } from '@/src/api/endpoints';
 import { ContractorDocument } from '@/src/types/api';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { StatusChip } from '@/src/components/ui/Chip';
 import { IconBadge, PortalHero, Section, State, Stat, Surface } from '@/src/components/ui/kit';
 import { useTheme } from '@/src/theme/ThemeProvider';
+import { Button } from '@/src/components/ui/Button';
+import { DocumentPreviewModal } from '@/src/components/admin/DocumentPreviewModal';
 
 const FILTERS = [
   { label: 'All', value: 'all' },
@@ -18,7 +21,9 @@ const FILTERS = [
 
 export default function ContractorDocsReviewScreen() {
   const { t } = useTheme();
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [previewDocument, setPreviewDocument] = useState<ContractorDocument | null>(null);
   const {
     data: documents = [],
     isLoading,
@@ -35,6 +40,16 @@ export default function ContractorDocsReviewScreen() {
   const pendingCount = documents.filter((item) => item.status === 'pending').length;
   const verifiedCount = documents.filter((item) => item.status === 'verified').length;
   const showLoadError = isError && documents.length === 0;
+  const reviewMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => verifyContractorDocument(id, status),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-contractor-docs'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] }),
+      ]);
+    },
+    onError: (error: any) => Alert.alert('Action failed', error.response?.data?.detail || 'Could not update this document.'),
+  });
 
   const renderDocument = ({ item }: { item: ContractorDocument }) => (
     <Surface style={{ marginHorizontal: 18, marginBottom: 12, padding: 14 }}>
@@ -47,7 +62,7 @@ export default function ContractorDocsReviewScreen() {
             <Text numberOfLines={1} style={{ flex: 1, color: t.sub, fontSize: 11 }}>{item.company_name}</Text>
           </View>
         </View>
-        <StatusChip status={item.status} size="sm" />
+        <StatusChip status={item.status} size="xs" />
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 13, paddingTop: 11, borderTopWidth: 1, borderTopColor: t.line }}>
@@ -59,6 +74,22 @@ export default function ContractorDocsReviewScreen() {
           {item.uploaded_at ? new Date(item.uploaded_at).toLocaleDateString() : 'Date unavailable'}
         </Text>
       </View>
+      <Button
+        size="sm"
+        variant="outline"
+        style={{ marginTop: 12 }}
+        disabled={!item.file}
+        onPress={() => setPreviewDocument(item)}
+        leftIcon={<FileText size={15} color={t.primary} />}
+      >
+        View document
+      </Button>
+      {item.status === 'pending' ? (
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          <Button size="sm" style={{ flex: 1 }} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, status: 'verified' })}>Verify</Button>
+          <Button size="sm" variant="danger" style={{ flex: 1 }} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, status: 'rejected' })}>Reject</Button>
+        </View>
+      ) : null}
     </Surface>
   );
 
@@ -143,6 +174,12 @@ export default function ContractorDocsReviewScreen() {
             </View>
           ) : undefined
         }
+      />
+      <DocumentPreviewModal
+        visible={!!previewDocument}
+        title={previewDocument?.doc_type || 'Company document'}
+        file={previewDocument?.file}
+        onClose={() => setPreviewDocument(null)}
       />
     </ScreenContainer>
   );

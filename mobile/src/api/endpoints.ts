@@ -141,8 +141,7 @@ export async function createEquipment(payload: Partial<Equipment>) {
 
 // ---- contractors ----
 export async function fetchContractors() {
-  const { data } = await apiClient.get<Paginated<ContractorCompany>>('/contractors/');
-  return data.results;
+  return fetchAllPages<ContractorCompany>('/contractors/');
 }
 
 export async function verifyContractorCompany(id: number, verificationStatus: string) {
@@ -151,8 +150,7 @@ export async function verifyContractorCompany(id: number, verificationStatus: st
 }
 
 export async function fetchAllContractorDocuments() {
-  const { data } = await apiClient.get<Paginated<ContractorDocument>>('/contractor-documents/');
-  return data.results;
+  return fetchAllPages<ContractorDocument>('/contractor-documents/');
 }
 
 export async function verifyContractorDocument(id: number, status: string) {
@@ -180,10 +178,7 @@ export async function removeTechnicianFromContractor(companyId: number, technici
 }
 
 export async function fetchContractorDocuments(companyId: number) {
-  const { data } = await apiClient.get<Paginated<ContractorDocument>>('/contractor-documents/', {
-    params: { company: companyId },
-  });
-  return data.results;
+  return fetchAllPages<ContractorDocument>('/contractor-documents/', { company: companyId });
 }
 
 export async function uploadContractorDocument(companyId: number, docType: string, file: any) {
@@ -199,8 +194,7 @@ export async function uploadContractorDocument(companyId: number, docType: strin
 
 // ---- technicians ----
 export async function fetchTechnicians(params?: Record<string, unknown>) {
-  const { data } = await apiClient.get<Paginated<TechnicianProfile>>('/technicians/', { params });
-  return data.results;
+  return fetchAllPages<TechnicianProfile>('/technicians/', params);
 }
 
 export async function fetchMyTechnicianProfile() {
@@ -219,8 +213,7 @@ export async function updateTechnicianProfile(id: number, payload: Partial<Techn
 }
 
 export async function fetchCredentials(technicianId: number | 'me') {
-  const { data } = await apiClient.get<Paginated<Credential>>('/credentials/', { params: { technician: technicianId } });
-  return data.results;
+  return fetchAllPages<Credential>('/credentials/', { technician: technicianId });
 }
 
 export async function fetchCredential(id: number) {
@@ -243,8 +236,7 @@ export async function runCredentialAiCheck(id: number) {
 }
 
 export async function fetchAllCredentials() {
-  const { data } = await apiClient.get<Paginated<Credential>>('/credentials/');
-  return data.results;
+  return fetchAllPages<Credential>('/credentials/');
 }
 
 export async function verifyCredential(id: number, status: string, notes?: string) {
@@ -260,10 +252,7 @@ export async function createCredential(payload: FormData) {
 }
 
 export async function fetchCapabilities(technicianId: number | 'me') {
-  const { data } = await apiClient.get<Paginated<CapabilitySkill>>('/capabilities/', {
-    params: { technician: technicianId },
-  });
-  return data.results;
+  return fetchAllPages<CapabilitySkill>('/capabilities/', { technician: technicianId });
 }
 
 export async function fetchCapability(id: number) {
@@ -272,8 +261,7 @@ export async function fetchCapability(id: number) {
 }
 
 export async function fetchAllCapabilities() {
-  const { data } = await apiClient.get<Paginated<CapabilitySkill>>('/capabilities/');
-  return data.results;
+  return fetchAllPages<CapabilitySkill>('/capabilities/');
 }
 
 export async function createCapability(payload: Partial<CapabilitySkill>) {
@@ -287,10 +275,7 @@ export async function verifyCapability(id: number, status: string, note?: string
 }
 
 export async function fetchWorkHistory(technicianId: number | 'me') {
-  const { data } = await apiClient.get<Paginated<WorkHistoryEntry>>('/work-history/', {
-    params: { technician: technicianId },
-  });
-  return data.results;
+  return fetchAllPages<WorkHistoryEntry>('/work-history/', { technician: technicianId });
 }
 
 export async function createWorkHistory(payload: Partial<WorkHistoryEntry>) {
@@ -431,8 +416,7 @@ export async function verifyAuditLog() {
 
 // ---- assessments ----
 export async function fetchAssessments() {
-  const { data } = await apiClient.get<Paginated<Assessment>>('/assessments/');
-  return data.results;
+  return fetchAllPages<Assessment>('/assessments/');
 }
 
 export async function fetchAssessment(id: number) {
@@ -477,8 +461,7 @@ export async function verifyPassportHash(token: string, hash: string) {
 
 // ---- refrigerant cylinders ----
 export async function fetchCylinders() {
-  const { data } = await apiClient.get<Paginated<RefrigerantCylinder>>('/cylinders/');
-  return data.results;
+  return fetchAllPages<RefrigerantCylinder>('/cylinders/');
 }
 
 export async function createCylinder(payload: {

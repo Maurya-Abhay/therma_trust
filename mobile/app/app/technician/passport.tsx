@@ -107,22 +107,26 @@ export default function PassportScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
         <PortalHero eyebrow="VERIFIED PROFESSIONAL" title={technician.full_name} subtitle={technician.contractor_name || 'Independent technician'} Icon={ShieldCheck} />
 
-        <Surface style={{ alignItems: 'center', marginTop: 14, padding: 18 }}>
-          <View style={{ width: 62, height: 62, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: t.tint }}>
-            <Text style={{ color: t.primary, fontSize: 20, fontWeight: '900' }}>{initials || 'TT'}</Text>
+        <Surface style={{ marginTop: 14, padding: 14, gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: t.tint }}>
+              <Text style={{ color: t.primary, fontSize: 18, fontWeight: '900' }}>{initials || 'TT'}</Text>
+            </View>
+            <View style={{ flex: 1, gap: 5 }}>
+              <Text numberOfLines={1} style={{ color: t.text, fontSize: 16, fontWeight: '800' }}>{technician.full_name}</Text>
+              <Text numberOfLines={1} style={{ color: t.sub, fontSize: 11 }}>{technician.contractor_name || 'Independent technician'}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {user?.role ? <RoleChip role={user.role} size="xs" /> : null}
+                <StatusChip status={technician.available ? 'active' : 'unavailable'} size="xs" />
+              </View>
+            </View>
           </View>
-          <Text style={{ color: t.text, fontSize: 18, fontWeight: '800', marginTop: 11 }}>{technician.full_name}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 8 }}>
-            {user?.role ? <RoleChip role={user.role} size="sm" /> : null}
-            <StatusChip status={technician.available ? 'active' : 'unavailable'} size="sm" />
-          </View>
-          {technician.contractor_name ? <Text style={{ color: t.sub, fontSize: 12, marginTop: 7 }}>{technician.contractor_name}</Text> : null}
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
             <Stat Icon={BadgeCheck} value={verifiedCapabilities.length} label="Skills" tone="ok" />
             <Stat Icon={ShieldCheck} value={verifiedCredentials.length} label="Credentials" tone="info" />
             <Stat Icon={UserRound} value={technician.average_rating ? technician.average_rating.toFixed(1) : '—'} label="Rating" tone="warn" />
           </View>
-          <Text style={{ color: t.sub, fontSize: 12, marginTop: 12 }}>{technician.years_experience} years of experience</Text>
+          <Text style={{ color: t.sub, fontSize: 11 }}>{technician.years_experience} years of experience · Platform profile</Text>
         </Surface>
 
         <Section title="Verified capabilities" action={`${verifiedCapabilities.length} verified`} />
@@ -152,21 +156,24 @@ export default function PassportScreen() {
         </Surface>
 
         <Section title="Public verification" />
-        <Surface style={{ alignItems: 'center', gap: 10, paddingVertical: 18 }}>
+        <Surface style={{ alignItems: 'center', gap: 8, paddingVertical: 14 }}>
           {token ? (
             <>
-              <QRCode value={publicVerifyUrl(token)} size={176} color="#0B1F3A" backgroundColor="#FFFFFF" />
-              <Text style={{ color: t.sub, fontSize: 12, textAlign: 'center' }}>Scan this code to verify this technician passport.</Text>
-              <Text selectable style={{ color: t.primary, fontSize: 10, textAlign: 'center' }}>{publicVerifyUrl(token)}</Text>
-              <Button variant="outline" size="sm" onPress={() => setShowQR(true)}>View QR full screen</Button>
+              <View style={{ padding: 8, borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: t.line }}>
+                <QRCode value={publicVerifyUrl(token)} size={148} color="#0B1F3A" backgroundColor="#FFFFFF" />
+              </View>
+              <Text style={{ color: t.sub, fontSize: 11, textAlign: 'center' }}>Scan to verify this passport.</Text>
+              <Text selectable numberOfLines={2} style={{ color: t.primary, fontSize: 10, textAlign: 'center' }}>{publicVerifyUrl(token)}</Text>
             </>
           ) : <State empty="A verification QR code is not available." />}
         </Surface>
 
-        <View style={{ gap: 9, marginTop: 16 }}>
-          <Button fullWidth loading={downloading} disabled={!token} leftIcon={<Download size={16} color="#FFFFFF" />} onPress={downloadPassport}>Download passport PDF</Button>
-          <Button fullWidth variant="outline" disabled={!token} onPress={shareVerificationLink}>Share verification link</Button>
-          <Button fullWidth variant="ghost" disabled={!token} onPress={() => setShowQR(true)}>View shareable QR</Button>
+        <View style={{ gap: 9, marginTop: 14 }}>
+          <View style={{ flexDirection: 'row', gap: 9 }}>
+            <Button style={{ flex: 1 }} loading={downloading} disabled={!token} leftIcon={<Download size={16} color="#FFFFFF" />} onPress={downloadPassport}>Download PDF</Button>
+            <Button style={{ flex: 1 }} variant="outline" disabled={!token} onPress={shareVerificationLink}>Share link</Button>
+          </View>
+          <Button fullWidth variant="ghost" disabled={!token} onPress={() => setShowQR(true)}>View QR full screen</Button>
         </View>
       </ScrollView>
 

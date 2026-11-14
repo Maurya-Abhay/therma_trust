@@ -67,7 +67,7 @@ export default function NotificationsScreen() {
     const Icon = KIND_ICONS[item.kind] ?? Bell;
     const selected = selectedIds.includes(item.id);
     return (
-      <View style={{ width: '100%', paddingHorizontal: 18, marginBottom: 9 }}>
+      <View style={{ width: '90%', alignSelf: 'center', marginBottom: 11 }}>
       <Pressable
         onPress={() => openNotification(item)}
         onLongPress={() => {
@@ -77,10 +77,13 @@ export default function NotificationsScreen() {
         accessibilityRole="button"
         accessibilityState={{ selected }}
         style={({ pressed }) => ({
+          width: '100%',
+          minHeight: 88,
           flexDirection: 'row',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           gap: 11,
-          padding: 13,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
           borderRadius: 18,
           borderWidth: 1,
           borderColor: selected ? t.primary : t.line,
@@ -89,12 +92,12 @@ export default function NotificationsScreen() {
         })}
       >
         <IconBadge Icon={Icon} tone={item.read ? 'primary' : 'info'} size={40} />
-        <View style={{ flex: 1, gap: 5 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 4, justifyContent: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text numberOfLines={1} style={{ flex: 1, color: t.text, fontSize: 13, fontWeight: '800' }}>{item.title}</Text>
             {!item.read ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: t.primary }} /> : null}
           </View>
-          <Text style={{ color: t.sub, fontSize: 12, lineHeight: 17 }}>{item.body}</Text>
+          <Text numberOfLines={2} style={{ color: t.sub, fontSize: 12, lineHeight: 17 }}>{item.body}</Text>
           <Text style={{ color: t.sub, fontSize: 10 }}>{format(new Date(item.created_at), 'd MMM yyyy, h:mm a')}</Text>
         </View>
         {selectMode ? (

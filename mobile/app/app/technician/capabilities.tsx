@@ -49,7 +49,8 @@ export default function CapabilitiesScreen() {
         ? item.refrigerant_type_code
         : item.safety_domain;
     return (
-      <Surface onPress={() => router.push(`/app/technician/capabilities/${item.id}` as any)} style={{ marginHorizontal: 18, marginBottom: 10, padding: 14 }}>
+      <View style={{ width: '100%', paddingHorizontal: 18, marginBottom: 10 }}>
+      <Surface onPress={() => router.push({ pathname: '/app/technician/capabilities/[id]', params: { id: String(item.id) } })} style={{ width: '100%', padding: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <IconBadge Icon={Tags} tone={toneFor(item.status)} size={42} />
           <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
@@ -64,6 +65,7 @@ export default function CapabilitiesScreen() {
         </View>
         {item.note ? <Text numberOfLines={2} style={{ color: t.sub, fontSize: 12, marginTop: 9 }}>{item.note}</Text> : null}
       </Surface>
+      </View>
     );
   };
 

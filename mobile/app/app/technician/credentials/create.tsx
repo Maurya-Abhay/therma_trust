@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Camera, FileBadge, FileUp, LoaderCircle, Trash2 } from 'lucide-react-native';
+import { Camera, FileBadge, FileUp, Trash2 } from 'lucide-react-native';
 import { format, isValid, parseISO } from 'date-fns';
-import { createCredential, extractCredential } from '@/src/api/endpoints';
-import { ExtractedCredentialFields } from '@/src/types/api';
+import { createCredential, fetchMyTechnicianProfile } from '@/src/api/endpoints';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
-import { IconBadge, Pill, Section, Surface } from '@/src/components/ui/kit';
+import { IconBadge, Section, Surface } from '@/src/components/ui/kit';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -44,14 +43,14 @@ export default function CreateCredentialScreen() {
   const [form, setForm] = useState<CredentialForm>(INITIAL_FORM);
   const [errors, setErrors] = useState<Partial<Record<FormField, string>>>({});
   const [selectedFile, setSelectedFile] = useState<UploadFile | null>(null);
-  const [extractedData, setExtractedData] = useState<ExtractedCredentialFields | null>(null);
-  const [extracting, setExtracting] = useState(false);
-  const [extractionError, setExtractionError] = useState<string | null>(null);
   const [dateField, setDateField] = useState<'issue_date' | 'expiry_date' | null>(null);
+  const profile = useQuery({ queryKey: ['my-technician-profile'], queryFn: fetchMyTechnicianProfile });
 
   const createMutation = useMutation({
     mutationFn: () => {
       const payload = new FormData();
+      if (!profile.data?.id) throw new Error('Your technician profile is not ready yet. Complete your profile first.');
+      payload.append('technician', String(profile.data.id));
       Object.entries(form).forEach(([key, value]) => payload.append(key, value));
       if (selectedFile) payload.append('file', selectedFile as any);
       return createCredential(payload);
@@ -64,33 +63,14 @@ export default function CreateCredentialScreen() {
       ]);
       Alert.alert('Credential submitted', 'Your credential has been added for review.', [{ text: 'OK', onPress: () => router.back() }]);
     },
-    onError: (error: any) => Alert.alert('Error', error.response?.data?.detail || 'Could not create credential.'),
+    onError: (error: any) => {
+      const details = error.response?.data;
+      const message = details?.detail || (details && typeof details === 'object'
+        ? Object.entries(details).map(([field, value]) => `${field}: ${Array.isArray(value) ? value.join(', ') : value}`).join('\n')
+        : null);
+      Alert.alert('Could not submit credential', message || error.message || 'Please check the form and try again.');
+    },
   });
-
-  const extractFromFile = async (file: UploadFile) => {
-    setExtracting(true);
-    setExtractionError(null);
-    setExtractedData(null);
-    try {
-      const data = await extractCredential(file);
-      setExtractedData(data);
-      if (data.is_credential_document) {
-        setForm((current) => ({
-          ...current,
-          name: data.credential_name || data.holder_name || current.name,
-          issuer_name: data.issuer_name || current.issuer_name,
-          credential_number: data.credential_number || current.credential_number,
-          issue_date: data.issue_date?.slice(0, 10) || current.issue_date,
-          expiry_date: data.expiry_date?.slice(0, 10) || current.expiry_date,
-          notes: data.notes || current.notes,
-        }));
-      }
-    } catch (error) {
-      setExtractionError(error instanceof Error ? error.message : 'Automatic document extraction failed. You can still enter the details manually.');
-    } finally {
-      setExtracting(false);
-    }
-  };
 
   const pickDocument = async () => {
     try {
@@ -106,7 +86,6 @@ export default function CreateCredentialScreen() {
       }
       const file: UploadFile = { uri: asset.uri, name: asset.name, type: asset.mimeType || 'application/octet-stream' };
       setSelectedFile(file);
-      await extractFromFile(file);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Could not select the document.');
     }
@@ -128,7 +107,6 @@ export default function CreateCredentialScreen() {
       }
       const file: UploadFile = { uri: compressed.uri, name: 'credential.jpg', type: 'image/jpeg' };
       setSelectedFile(file);
-      await extractFromFile(file);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Could not select the image.');
     }
@@ -167,54 +145,47 @@ export default function CreateCredentialScreen() {
     <ScreenContainer headerTitle="Add credential" showProfile={false} contentStyle={{ paddingHorizontal: 0, paddingTop: 0 }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 16, paddingBottom: 28 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-            <IconBadge Icon={FileBadge} size={48} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <IconBadge Icon={FileBadge} size={40} />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: t.text, fontSize: 19, fontWeight: '800' }}>Submit a credential</Text>
-              <Text style={{ color: t.sub, fontSize: 12, lineHeight: 17, marginTop: 3 }}>Attach your certificate and confirm the extracted details before sending it for review.</Text>
+              <Text style={{ color: t.text, fontSize: 17, fontWeight: '800' }}>Add credential</Text>
+              <Text style={{ color: t.sub, fontSize: 11, marginTop: 2 }}>Upload the certificate and enter its details.</Text>
             </View>
           </View>
 
           <Section title="Credential document" />
-          <Surface style={{ gap: 11 }}>
+          <Surface style={{ gap: 8, padding: 12 }}>
             {selectedFile ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <IconBadge Icon={FileBadge} tone="ok" size={40} />
+                <IconBadge Icon={FileBadge} tone="ok" size={36} />
                 <View style={{ flex: 1 }}>
                   <Text numberOfLines={1} style={{ color: t.text, fontSize: 13, fontWeight: '700' }}>{selectedFile.name}</Text>
                   <Text style={{ color: t.sub, fontSize: 11, marginTop: 3 }}>{selectedFile.type}</Text>
                 </View>
-                <Pressable accessibilityRole="button" onPress={() => { setSelectedFile(null); setExtractedData(null); setExtractionError(null); }}>
+                <Pressable accessibilityRole="button" onPress={() => setSelectedFile(null)}>
                   <Trash2 size={18} color={t.bad} />
                 </Pressable>
               </View>
             ) : (
-              <Text style={{ color: t.sub, fontSize: 12, lineHeight: 18 }}>Add a PDF or clear photo of the certificate. The document is required for review.</Text>
+              <Text style={{ color: t.sub, fontSize: 11, lineHeight: 16 }}>PDF or clear photo, maximum 1 MB.</Text>
             )}
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Button style={{ flex: 1 }} variant="outline" leftIcon={<FileUp size={15} color={t.primary} />} onPress={pickDocument}>Choose document</Button>
               <Button style={{ flex: 1 }} variant="outline" leftIcon={<Camera size={15} color={t.primary} />} onPress={pickPhoto}>Choose photo</Button>
             </View>
-            {extracting ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><LoaderCircle size={15} color={t.primary} /><Text style={{ color: t.primary, fontSize: 12 }}>Reading document details…</Text></View> : null}
-            {extractedData?.is_credential_document ? (
-              <View style={{ gap: 7 }}>
-                <Pill text="Document recognized - review the fields below" tone="ok" />
-                {extractedData.flags?.map((flag, index) => <Pill key={`${flag.code}-${index}`} text={flag.message} tone={flag.severity === 'warning' ? 'warn' : 'info'} />)}
-              </View>
-            ) : extractedData ? <Pill text="This file may not be a credential. Confirm the document before submitting." tone="warn" /> : null}
-            {extractionError ? <Text style={{ color: t.bad, fontSize: 12 }}>{extractionError}</Text> : null}
           </Surface>
 
           <Section title="Credential details" />
-          <Surface style={{ gap: 12 }}>
-            <Input label="Credential name *" placeholder="e.g. EPA 608 Universal" value={form.name} onChangeText={(value) => updateField('name', value)} error={errors.name} />
-            <Input label="Issuer *" placeholder="e.g. ESCO Institute" value={form.issuer_name} onChangeText={(value) => updateField('issuer_name', value)} error={errors.issuer_name} />
-            <Input label="Credential number *" placeholder="Enter the number shown on the certificate" value={form.credential_number} onChangeText={(value) => updateField('credential_number', value)} error={errors.credential_number} />
+          <Surface style={{ gap: 8, padding: 12 }}>
+            <Input fieldStyle={{ minHeight: 46, borderRadius: 12 }} inputStyle={{ minHeight: 44, paddingVertical: 8 }} label="Credential name *" placeholder="e.g. EPA 608 Universal" value={form.name} onChangeText={(value) => updateField('name', value)} error={errors.name} />
+            <Input fieldStyle={{ minHeight: 46, borderRadius: 12 }} inputStyle={{ minHeight: 44, paddingVertical: 8 }} label="Issuer *" placeholder="e.g. ESCO Institute" value={form.issuer_name} onChangeText={(value) => updateField('issuer_name', value)} error={errors.issuer_name} />
+            <Input fieldStyle={{ minHeight: 46, borderRadius: 12 }} inputStyle={{ minHeight: 44, paddingVertical: 8 }} label="Credential number *" placeholder="Number on certificate" value={form.credential_number} onChangeText={(value) => updateField('credential_number', value)} error={errors.credential_number} />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
             {(['issue_date', 'expiry_date'] as const).map((field) => (
-              <View key={field}>
+              <View key={field} style={{ flex: 1 }}>
                 <Text style={{ color: t.sub, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>{field === 'issue_date' ? 'Issue date' : 'Expiry date'}</Text>
-                <Pressable onPress={() => setDateField(field)} style={{ borderWidth: 1, borderColor: errors[field] ? t.bad : t.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, backgroundColor: t.card }}>
-                  <Text style={{ color: form[field] ? t.text : t.sub, fontSize: 14 }}>{form[field] || 'Select date'}</Text>
+                <Pressable onPress={() => setDateField(field)} style={{ borderWidth: 1, borderColor: errors[field] ? t.bad : t.line, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 12, backgroundColor: t.field }}>
+                  <Text style={{ color: form[field] ? t.text : t.sub, fontSize: 12 }}>{form[field] || 'Select date'}</Text>
                 </Pressable>
                 {errors[field] ? <Text style={{ color: t.bad, fontSize: 11, marginTop: 5 }}>{errors[field]}</Text> : null}
                 {dateField === field ? (
@@ -230,8 +201,9 @@ export default function CreateCredentialScreen() {
                 ) : null}
               </View>
             ))}
-            <Input label="Notes" placeholder="Additional information (optional)" multiline numberOfLines={3} value={form.notes} onChangeText={(value) => updateField('notes', value)} />
-            <Button fullWidth loading={createMutation.isPending} disabled={extracting} onPress={submit}>Submit for review</Button>
+            </View>
+            <Input fieldStyle={{ minHeight: 46, borderRadius: 12 }} inputStyle={{ minHeight: 44, paddingVertical: 8 }} label="Notes" placeholder="Optional notes" multiline numberOfLines={2} value={form.notes} onChangeText={(value) => updateField('notes', value)} />
+            <Button fullWidth loading={createMutation.isPending} disabled={profile.isLoading || !profile.data?.id} onPress={submit}>Submit for review</Button>
           </Surface>
         </ScrollView>
       </KeyboardAvoidingView>

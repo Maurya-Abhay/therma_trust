@@ -119,61 +119,108 @@ export async function renderServiceReport({
 
 export async function renderPassport({ displayName, contractorName, yearsExperience, capabilities, credentials, digest, verifyUrl }) {
   const { doc, finish } = createDocument({ title: `ThermaTrust passport - ${displayName}` });
-
-  doc.font("Helvetica-Bold").fontSize(11).fillColor(BRAND).text("ThermaTrust");
-  doc.font("Helvetica-Bold").fontSize(22).fillColor("#000000").text("Verified Technician Passport");
-  doc.font("Helvetica-Bold").fontSize(16).text(displayName);
-  doc
-    .font("Helvetica")
-    .fontSize(10)
-    .fillColor(GREY)
-    .text(`${contractorName || "Independent technician"}  |  Issued ${new Date().toISOString().slice(0, 10)}`)
-    .text(`Experience (self-reported): ${yearsExperience} years`);
-
-  heading(doc, "Verified capabilities");
-  if (capabilities.length) {
-    const ordered = [...capabilities].sort(
-      (a, b) =>
-        (TYPE_ORDER[a.capability_type] ?? 9) - (TYPE_ORDER[b.capability_type] ?? 9) || a.label.localeCompare(b.label)
-    );
-    table(doc, {
-      header: ["Type", "Capability"],
-      widths: [mm(35), mm(135)],
-      rows: ordered.map((c) => [TYPE_LABELS[c.capability_type] ?? c.capability_type, c.label]),
-    });
-  } else {
-    doc.font("Helvetica").fontSize(9.5).fillColor("#777777").text("No platform-verified capabilities yet.");
-  }
-
-  heading(doc, "Platform-verified credentials");
-  if (credentials.length) {
-    table(doc, {
-      header: ["Credential", "Issuer", "Expires"],
-      widths: [mm(70), mm(70), mm(30)],
-      rows: credentials.map((c) => [c.name, c.issuer_name, c.expiry_date || "No expiry"]),
-    });
-  } else {
-    doc.font("Helvetica").fontSize(9.5).fillColor("#777777").text("No platform-verified credentials yet.");
-  }
-
-  doc.moveDown(2);
-  const qr = await qrPng(verifyUrl);
-  if (doc.y + mm(40) > doc.page.height - doc.page.margins.bottom) doc.addPage();
-  const top = doc.y;
   const left = doc.page.margins.left;
-  doc.image(qr, left, top, { width: mm(32), height: mm(32) });
-  const textX = left + mm(38);
-  const textWidth = mm(132);
-  doc.font("Helvetica-Bold").fontSize(8).fillColor(GREY).text("Scan to check this passport is still current.", textX, top, { width: textWidth });
-  doc
-    .font("Helvetica")
-    .text(
-      "Only items the platform has verified are listed. If any capability is later revoked or a credential expires, scanning this code will report that the passport is outdated.",
-      textX,
-      doc.y + 3,
-      { width: textWidth }
-    );
-  doc.text("Integrity digest (SHA-256)", textX, doc.y + 6, { width: textWidth });
-  doc.font("Courier").fontSize(7.5).text(`${digest.slice(0, 32)}\n${digest.slice(32)}`, textX, doc.y + 2, { width: textWidth });
+  const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const issued = new Date().toISOString().slice(0, 10);
+  const navy = "#102A43";
+  const ink = "#183B56";
+  const pale = "#F3F8F8";
+  const line = "#D8E9E7";
+  const green = "#0F766E";
+  const ordered = [...capabilities].sort(
+    (a, b) => (TYPE_ORDER[a.capability_type] ?? 9) - (TYPE_ORDER[b.capability_type] ?? 9) || a.label.localeCompare(b.label)
+  );
+  const innerTop = doc.page.margins.top;
+  const innerHeight = doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
+  const columnGap = mm(7);
+  const columnWidth = (width - columnGap) / 2;
+  const qr = await qrPng(verifyUrl);
+
+  doc.lineWidth(1.3).strokeColor(green).roundedRect(left - mm(5), innerTop - mm(5), width + mm(10), innerHeight + mm(10), 8).stroke();
+  doc.lineWidth(0.35).strokeColor(line).roundedRect(left - mm(2), innerTop - mm(2), width + mm(4), innerHeight + mm(4), 5).stroke();
+
+  const headerTop = doc.y;
+  doc.rect(left, headerTop, width, mm(27)).fill(navy);
+  doc.rect(left, headerTop + mm(23), width, mm(4)).fill(green);
+  doc.circle(left + mm(13), headerTop + mm(13.5), mm(7)).fill("#FFFFFF");
+  doc.font("Helvetica-Bold").fontSize(9).fillColor(green).text("TT", left + mm(8), headerTop + mm(10.8), { width: mm(10), align: "center" });
+  doc.font("Helvetica-Bold").fontSize(18).fillColor("#FFFFFF").text("ThermaTrust", left + mm(25), headerTop + mm(5), { width: mm(90) });
+  doc.font("Helvetica").fontSize(8).fillColor("#BEE8E3").text("TRUSTED REFRIGERATION PROFESSIONALS", left + mm(25), headerTop + mm(16), { width: mm(110) });
+  doc.font("Helvetica-Bold").fontSize(8).fillColor("#FFFFFF").text("TECHNICIAN PASSPORT", left + width - mm(58), headerTop + mm(10.5), { width: mm(50), align: "right" });
+  doc.y = headerTop + mm(34);
+
+  const identityTop = doc.y;
+  doc.roundedRect(left, identityTop, width, mm(48), 7).fill(pale);
+  doc.lineWidth(0.6).strokeColor(line).roundedRect(left, identityTop, width, mm(48), 7).stroke();
+  const detailX = left + mm(8);
+  const detailWidth = width - mm(64);
+  doc.font("Helvetica").fontSize(8).fillColor(green).text("VERIFIED PROFESSIONAL", detailX, identityTop + mm(7), { width: detailWidth });
+  doc.font("Helvetica-Bold").fontSize(21).fillColor(navy).text(displayName, detailX, identityTop + mm(14), { width: detailWidth });
+  doc.font("Helvetica").fontSize(10).fillColor(ink).text(contractorName || "Independent technician", detailX, identityTop + mm(25), { width: detailWidth });
+  doc.font("Helvetica").fontSize(8).fillColor(GREY).text(`Issued ${issued}  ·  ${yearsExperience} years experience (self-reported)`, detailX, identityTop + mm(34), { width: detailWidth });
+  doc.roundedRect(left + width - mm(51), identityTop + mm(7), mm(41), mm(34), 6).fill("#FFFFFF");
+  doc.image(qr, left + width - mm(48), identityTop + mm(10), { width: mm(35), height: mm(35) });
+  doc.y = identityTop + mm(55);
+
+  const statTop = doc.y;
+  const statWidth = (width - mm(8)) / 3;
+  [["EXPERIENCE", `${yearsExperience} years`, green], ["VERIFIED SKILLS", `${ordered.length}`, "#2D9CDB"], ["CREDENTIALS", `${credentials.length}`, "#D97706"]].forEach(([label, value, color], index) => {
+    const x = left + index * (statWidth + mm(4));
+    doc.roundedRect(x, statTop, statWidth, mm(19), 5).fill("#FFFFFF");
+    doc.lineWidth(0.55).strokeColor(line).roundedRect(x, statTop, statWidth, mm(19), 5).stroke();
+    doc.rect(x, statTop, mm(2), mm(19)).fill(color);
+    doc.font("Helvetica-Bold").fontSize(12).fillColor(navy).text(value, x + mm(7), statTop + mm(3.5), { width: statWidth - mm(10) });
+    doc.font("Helvetica").fontSize(7).fillColor(GREY).text(label, x + mm(7), statTop + mm(12), { width: statWidth - mm(10) });
+  });
+  doc.y = statTop + mm(26);
+
+  const sectionTitle = (x, y, title, count) => {
+    doc.font("Helvetica-Bold").fontSize(9).fillColor(green).text(title, x, y, { width: columnWidth - mm(20) });
+    doc.font("Helvetica").fontSize(7.5).fillColor(GREY).text(count, x + columnWidth - mm(35), y + mm(0.5), { width: mm(35), align: "right" });
+  };
+  const capabilityTop = doc.y;
+  sectionTitle(left, capabilityTop, "VERIFIED CAPABILITIES", `${ordered.length} items`);
+  sectionTitle(left + columnWidth + columnGap, capabilityTop, "VERIFIED CREDENTIALS", `${credentials.length} records`);
+  const contentTop = capabilityTop + mm(7);
+  const pillWidth = columnWidth;
+  const drawCapability = (item, index) => {
+    const y = contentTop + index * mm(16);
+    doc.roundedRect(left, y, pillWidth, mm(13), 5).fill(index % 2 ? "#FFFFFF" : pale);
+    doc.lineWidth(0.45).strokeColor(line).roundedRect(left, y, pillWidth, mm(13), 5).stroke();
+    doc.circle(left + mm(6), y + mm(6.5), mm(2)).fill(green);
+    doc.font("Helvetica-Bold").fontSize(6.5).fillColor(GREY).text((TYPE_LABELS[item.capability_type] ?? item.capability_type).toUpperCase(), left + mm(11), y + mm(2), { width: mm(38) });
+    doc.font("Helvetica").fontSize(8.5).fillColor(ink).text(item.label, left + mm(11), y + mm(6), { width: pillWidth - mm(15), height: mm(5.5), ellipsis: true });
+  };
+  if (ordered.length) ordered.forEach(drawCapability);
+  else doc.font("Helvetica").fontSize(8.5).fillColor(GREY).text("No platform-verified capabilities yet.", left, contentTop);
+
+  const credentialX = left + columnWidth + columnGap;
+  if (credentials.length) {
+    credentials.forEach((credential, index) => {
+      const y = contentTop + index * mm(22);
+      doc.roundedRect(credentialX, y, columnWidth, mm(19), 5).fill(index % 2 ? "#FFFFFF" : pale);
+      doc.lineWidth(0.45).strokeColor(line).roundedRect(credentialX, y, columnWidth, mm(19), 5).stroke();
+      doc.circle(credentialX + mm(6), y + mm(9.5), mm(2.5)).fill(green);
+      doc.font("Helvetica-Bold").fontSize(8.5).fillColor(ink).text(credential.name, credentialX + mm(12), y + mm(3), { width: columnWidth - mm(17) });
+      doc.font("Helvetica").fontSize(7).fillColor(GREY).text(credential.issuer_name, credentialX + mm(12), y + mm(10), { width: columnWidth - mm(17) });
+      doc.font("Helvetica-Bold").fontSize(6.5).fillColor(green).text(credential.expiry_date ? `EXPIRES ${credential.expiry_date}` : "NO EXPIRY", credentialX + mm(12), y + mm(14), { width: columnWidth - mm(17) });
+    });
+  } else {
+    doc.font("Helvetica").fontSize(8.5).fillColor(GREY).text("No platform-verified credentials yet.", credentialX, contentTop);
+  }
+
+  const maxRows = Math.max(ordered.length, credentials.length * 1.4, 1);
+  const verificationTop = contentTop + maxRows * mm(16) + mm(6);
+  const panelTop = Math.min(verificationTop, doc.page.height - doc.page.margins.bottom - mm(47));
+  doc.roundedRect(left, panelTop, width, mm(41), 7).fill(navy);
+  doc.roundedRect(left + mm(5), panelTop + mm(4), mm(33), mm(33), 4).fill("#FFFFFF");
+  doc.image(qr, left + mm(7), panelTop + mm(6), { width: mm(29), height: mm(29) });
+  const verifyX = left + mm(45);
+  doc.font("Helvetica-Bold").fontSize(10).fillColor("#FFFFFF").text("SCAN TO VERIFY THIS PASSPORT", verifyX, panelTop + mm(6), { width: width - mm(52) });
+  doc.font("Helvetica").fontSize(8).fillColor("#C7E9E5").text("Live ThermaTrust records confirm whether these skills and credentials are still verified.", verifyX, panelTop + mm(14), { width: width - mm(52) });
+  doc.font("Helvetica-Bold").fontSize(6.5).fillColor("#FFFFFF").text("INTEGRITY DIGEST · SHA-256", verifyX, panelTop + mm(27), { width: width - mm(52) });
+  doc.font("Courier").fontSize(6).fillColor("#C7E9E5").text(`${digest.slice(0, 32)}\n${digest.slice(32)}`, verifyX, panelTop + mm(31), { width: width - mm(52) });
+  doc.font("Helvetica").fontSize(7).fillColor(GREY).text(config.frontendUrl, left, doc.page.height - doc.page.margins.bottom - mm(8), { width, align: "center" });
+  doc.font("Helvetica").fontSize(6.5).fillColor("#78909C").text("ThermaTrust · Live professional verification · Keep this document with the technician record.", left, doc.page.height - doc.page.margins.bottom - mm(3), { width, align: "center" });
   return finish();
 }

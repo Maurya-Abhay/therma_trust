@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchAssessment, submitAssessment } from '@/src/api/endpoints';
 import { Assessment, AssessmentAttemptResult } from '@/src/types/api';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
-import { Card, CardHeader, CardContent } from '@/src/components/ui/Card';
+import { Card, CardContent } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { Chip } from '@/src/components/ui/Chip';
 import { State } from '@/src/components/ui/kit';
@@ -135,17 +135,24 @@ export default function AssessmentTakeScreen() {
       <View style={styles.container}>
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
+          <View style={styles.progressMeta}>
+            <Text style={styles.progressLabel}>Question {currentQuestion + 1} of {assessment.questions.length}</Text>
+            <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+          </View>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
-          <Text style={styles.progressText}>{Math.round(progress)}% Complete</Text>
         </View>
 
         {/* Question */}
         {question && (
           <ScrollView contentContainerStyle={styles.questionContent}>
-            <Card>
-              <CardHeader title={`Q${currentQuestion + 1}`} subtitle={question.prompt} />
+            <Card style={styles.questionCard}>
+              <View style={styles.questionHeader}>
+                <Chip variant="primary" size="sm">Question {currentQuestion + 1}</Chip>
+                <Text style={styles.questionPrompt}>{question.prompt}</Text>
+                <Text style={styles.questionHint}>Choose one answer</Text>
+              </View>
               <CardContent>
                 <View style={styles.choices}>
                   {question.choices.map((choice, i) => (
@@ -157,16 +164,16 @@ export default function AssessmentTakeScreen() {
                         answers[question.id] === i && styles.choiceSelected,
                       ]}
                     >
-                      <View style={[
-                        styles.choiceRadio,
-                        answers[question.id] === i && styles.choiceRadioSelected,
-                      ]} />
+                      <View style={[styles.choiceLetter, answers[question.id] === i && styles.choiceLetterSelected]}>
+                        <Text style={[styles.choiceLetterText, answers[question.id] === i && styles.choiceLetterTextSelected]}>{String.fromCharCode(65 + i)}</Text>
+                      </View>
                       <Text style={[
                         styles.choiceText,
                         answers[question.id] === i && styles.choiceTextSelected,
                       ]}>
                         {choice}
                       </Text>
+                      {answers[question.id] === i ? <Text style={styles.selectedMark}>✓</Text> : null}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -212,18 +219,27 @@ export default function AssessmentTakeScreen() {
 
 const createStyles = (t: Palette) => StyleSheet.create({
   container: { flex: 1 },
-  progressContainer: { padding: 16, borderBottomWidth: 1, borderBottomColor: t.line },
-  progressBar: { height: 6, backgroundColor: t.line, borderRadius: 3, overflow: 'hidden', marginBottom: 8 },
+  progressContainer: { paddingHorizontal: 18, paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: t.line, backgroundColor: t.card },
+  progressMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  progressLabel: { fontSize: 12, color: t.text, fontWeight: '700' },
+  progressBar: { height: 7, backgroundColor: t.field, borderRadius: 4, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: t.primary, borderRadius: 3 },
-  progressText: { fontSize: 12, color: t.sub, textAlign: 'center' },
-  questionContent: { flex: 1, padding: 16 },
-  choices: { gap: 10 },
-  choice: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 2, borderColor: t.line, borderRadius: 14, backgroundColor: t.card },
+  progressText: { fontSize: 12, color: t.primary, fontWeight: '800' },
+  questionContent: { flexGrow: 1, padding: 16, paddingBottom: 24 },
+  questionCard: { padding: 0, overflow: 'hidden' },
+  questionHeader: { padding: 18, backgroundColor: t.field, borderBottomWidth: 1, borderBottomColor: t.line },
+  questionPrompt: { fontSize: 18, lineHeight: 25, color: t.text, fontWeight: '800', marginTop: 12 },
+  questionHint: { fontSize: 11, color: t.sub, marginTop: 7 },
+  choices: { gap: 10, padding: 16 },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: 11, padding: 13, borderWidth: 1.5, borderColor: t.line, borderRadius: 14, backgroundColor: t.card, minHeight: 58 },
   choiceSelected: { borderColor: t.primary, backgroundColor: t.tint },
-  choiceRadio: { width: 22, height: 22, borderWidth: 2, borderColor: t.line, borderRadius: 11 },
-  choiceRadioSelected: { borderColor: t.primary, backgroundColor: t.primary },
+  choiceLetter: { width: 30, height: 30, borderWidth: 1, borderColor: t.line, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: t.field },
+  choiceLetterSelected: { borderColor: t.primary, backgroundColor: t.primary },
+  choiceLetterText: { fontSize: 12, color: t.sub, fontWeight: '800' },
+  choiceLetterTextSelected: { color: '#FFFFFF' },
   choiceText: { fontSize: 14, color: t.text, flex: 1 },
   choiceTextSelected: { color: t.primary, fontWeight: '700' },
+  selectedMark: { fontSize: 18, color: t.primary, fontWeight: '900' },
   navBar: { flexDirection: 'row', gap: 12, padding: 16, borderTopWidth: 1, borderTopColor: t.line, backgroundColor: t.card },
   navBtn: { flex: 1 },
   resultContent: { padding: 16, paddingBottom: 100 },

@@ -15,7 +15,7 @@ import { useTheme } from '@/src/theme/ThemeProvider';
 
 export default function CredentialDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const credentialId = Number(id);
+  const credentialId = Number(Array.isArray(id) ? id[0] : id);
   const { user } = useAuth();
   const { t } = useTheme();
   const queryClient = useQueryClient();
@@ -90,7 +90,7 @@ export default function CredentialDetailScreen() {
         </Surface>
 
         <Section title="Credential details" />
-        <Surface style={{ gap: 13 }}>
+        <Surface style={{ paddingVertical: 4 }}>
           {[
             ['Issuer', credential.issuer_name],
             ['Credential number', credential.credential_number],
@@ -99,10 +99,10 @@ export default function CredentialDetailScreen() {
             ['Expiry date', credential.expiry_date ? format(new Date(credential.expiry_date), 'd MMM yyyy') : 'No expiry date'],
             ['Created', credential.created_at ? format(new Date(credential.created_at), 'd MMM yyyy') : '—'],
             ['Notes', credential.notes || 'No notes'],
-          ].map(([label, value]) => (
-            <View key={label} style={{ gap: 3 }}>
-              <Text style={{ color: t.sub, fontSize: 10, fontWeight: '800', letterSpacing: 0.7, textTransform: 'uppercase' }}>{label}</Text>
-              <Text style={{ color: t.text, fontSize: 13, lineHeight: 19 }}>{value}</Text>
+          ].map(([label, value], index, rows) => (
+            <View key={label} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12, borderBottomWidth: index === rows.length - 1 ? 0 : 1, borderBottomColor: t.line }}>
+              <Text style={{ width: '36%', color: t.sub, fontSize: 10, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</Text>
+              <Text style={{ flex: 1, color: t.text, fontSize: 13, lineHeight: 18, textAlign: 'right' }}>{value}</Text>
             </View>
           ))}
         </Surface>
