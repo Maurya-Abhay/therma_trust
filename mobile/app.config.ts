@@ -73,6 +73,9 @@ export default {
     extra: {
       apiBaseUrl,
       publicWebBaseUrl,
+      eas: {
+        projectId: '0983d2eb-9d52-40fe-894a-d533f0eb20ab',
+      },
     },
   },
 };

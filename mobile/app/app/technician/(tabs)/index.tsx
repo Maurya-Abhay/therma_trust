@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Bell, BriefcaseBusiness, CalendarDays, ClipboardCheck, FileBadge, IdCard, ListChecks, Plus, Settings, ShieldCheck, Tags, UserRound, Wrench } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { fetchCredentials, fetchJobs, fetchMyTechnicianProfile } from '@/src/api/endpoints';
+import { fetchCredentials, fetchJobs, fetchMyTechnicianProfile, fetchNotifications, fetchOnboarding } from '@/src/api/endpoints';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
 import { NotificationHeaderAction } from '@/src/components/technician/NotificationHeaderAction';
 import { useTheme } from '@/src/theme/ThemeProvider';
@@ -44,6 +44,17 @@ export default function TechnicianHome() {
     enabled: !!me.data?.id,
     staleTime: 60000,
   });
+  const onboarding = useQuery({
+    queryKey: ['onboarding', me.data?.id],
+    queryFn: fetchOnboarding,
+    enabled: !!me.data?.id,
+    staleTime: 60000,
+  });
+  const notifications = useQuery({
+    queryKey: ['notifications'],
+    queryFn: fetchNotifications,
+    staleTime: 30000,
+  });
 
   const jobList = jobs.data ?? [];
   const credentialList = credentials.data ?? [];
@@ -54,6 +65,11 @@ export default function TechnicianHome() {
   ).length;
   const allCredentialsVerified = credentialList.length > 0 && verifiedCredentials === credentialList.length;
   const firstName = me.data?.full_name?.trim().split(/\s+/)[0];
+  const onboardingData = onboarding.data;
+  const nextStep = onboardingData?.steps.find((step) => !step.done);
+  const onboardingPercent = onboardingData && onboardingData.total > 0
+    ? Math.round((onboardingData.completed / onboardingData.total) * 100)
+    : null;
   const recentActivity = [
     ...jobList.map((job) => ({
       id: `job-${job.id}`,
@@ -68,6 +84,13 @@ export default function TechnicianHome() {
       subtitle: `${credential.issuer_name} · ${credential.effective_status.replace(/_/g, ' ')}`,
       date: credential.created_at,
       Icon: FileBadge,
+    })),
+    ...(notifications.data?.results ?? []).map((notification) => ({
+      id: `notification-${notification.id}`,
+      title: notification.title,
+      subtitle: notification.body,
+      date: notification.created_at,
+      Icon: Bell,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
@@ -85,6 +108,27 @@ export default function TechnicianHome() {
           subtitle={me.data?.contractor_name || 'Jobs, credentials, and your profile at a glance.'}
           Icon={IdCard}
         />
+        {onboardingData && onboardingPercent !== null && onboardingPercent < 100 ? (
+          <Surface style={{ marginTop: 12, padding: 13 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: t.tint, alignItems: 'center', justifyContent: 'center' }}>
+                <ListChecks size={21} color={t.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.text, fontSize: 13, fontWeight: '800' }}>Profile setup {onboardingPercent}% complete</Text>
+                <Text style={{ color: t.sub, fontSize: 11, marginTop: 3 }}>
+                  {nextStep ? `Recommended next: ${nextStep.title}` : 'Finish your onboarding to unlock the full portal.'}
+                </Text>
+              </View>
+              <Pressable onPress={go('/app/shared/onboarding')} style={{ paddingHorizontal: 10, paddingVertical: 7, borderRadius: 9, backgroundColor: t.primary }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>Continue</Text>
+              </Pressable>
+            </View>
+            <View style={{ height: 5, borderRadius: 4, backgroundColor: t.field, overflow: 'hidden', marginTop: 11 }}>
+              <View style={{ width: `${onboardingPercent}%`, height: '100%', backgroundColor: t.primary }} />
+            </View>
+          </Surface>
+        ) : null}
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
           <Stat Icon={BriefcaseBusiness} value={openJobs.length} label="Open jobs" tone="warn" />
           <Stat Icon={FileBadge} value={`${verifiedCredentials}/${credentialList.length}`} label="Verified" tone="ok" />
@@ -135,7 +179,7 @@ export default function TechnicianHome() {
 
         <Section title="Recent activity" />
         <Surface style={{ paddingVertical: 0 }}>
-          {jobs.isLoading || credentials.isLoading ? <State loading /> : recentActivity.length === 0 ? <State empty="Your recent job and credential activity will appear here." /> :
+          {jobs.isLoading || credentials.isLoading || notifications.isLoading ? <State loading /> : recentActivity.length === 0 ? <State empty="Your recent job, credential, and notification activity will appear here." /> :
             recentActivity.map((activity, index, list) => (
               <Row
                 key={activity.id}

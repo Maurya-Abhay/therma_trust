@@ -41,6 +41,7 @@ export function verifyFileSignature(relative, expires, signature) {
 export const fileUrl = (req, relative) => {
   if (!relative) return null;
   const normalized = String(relative).replaceAll("\\", "/");
+  if (config.imagekit.urlEndpoint && normalized.startsWith(`${config.imagekit.urlEndpoint}/`)) return normalized;
   if (normalized.startsWith("/") || normalized.split("/").some((part) => !part || part === "." || part === "..")) {
     return null;
   }

@@ -5,14 +5,14 @@ import { getScoped, requireAdmin } from "../lib/http.js";
 import { allOf, filtersFrom, paginate } from "../lib/pagination.js";
 import { validateBody } from "../lib/validate.js";
 import { authenticate } from "../middleware/auth.js";
-import { multipart, storeUpload } from "../middleware/upload.js";
+import { MAX_FILE_BYTES, multipart, storeUpload } from "../middleware/upload.js";
 import {
   CapabilitySkill, ContractorCompany, ContractorDocument, TechnicianProfile, isAdmin,
 } from "../models/index.js";
 import { presentContractorDocuments, presentContractors, presentTechnicians } from "../presenters.js";
 import { recordAudit } from "../services/audit.js";
 import { computeCompliance } from "../services/compliance.js";
-import { detectMediaType, MAX_UPLOAD_BYTES } from "../services/ocr.js";
+import { detectMediaType } from "../services/ocr.js";
 
 const router = Router();
 router.use("/contractors", authenticate);
@@ -161,8 +161,8 @@ router.get("/contractor-documents", async (req, res) => {
 router.post("/contractor-documents", multipart.single("file"), async (req, res) => {
   const data = validateBody(req.body, DOCUMENT_SPEC);
   if (!req.file) throw validationError({ file: "No file was submitted." });
-  if (req.file.size > MAX_UPLOAD_BYTES || !detectMediaType(req.file.buffer)) {
-    throw validationError({ file: "Upload a PDF or JPEG, PNG, GIF or WebP image no larger than 5 MB." });
+  if (req.file.size > MAX_FILE_BYTES || !detectMediaType(req.file.buffer)) {
+    throw validationError({ file: "Upload a PDF or JPEG, PNG, GIF or WebP image no larger than 1 MB." });
   }
   const company = await ContractorCompany.findById(data.company).lean();
   if (!company) throw validationError({ company: `Invalid pk "${data.company}" - object does not exist.` });

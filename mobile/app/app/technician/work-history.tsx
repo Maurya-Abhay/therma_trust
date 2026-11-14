@@ -10,6 +10,7 @@ import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
 import { IconBadge, Pill, PortalHero, Section, State, Surface } from '@/src/components/ui/kit';
 import { useTheme } from '@/src/theme/ThemeProvider';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type WorkHistoryForm = {
   equipment_category: string;
@@ -32,6 +33,7 @@ export default function WorkHistoryScreen() {
   const { t } = useTheme();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<WorkHistoryForm>(emptyForm);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const historyQuery = useQuery({
     queryKey: ['my-work-history'],
@@ -142,7 +144,23 @@ export default function WorkHistoryScreen() {
                       {refrigerantsQuery.isError ? <Text style={{ color: t.bad, fontSize: 11, marginTop: 7 }}>Refrigerant options could not be loaded.</Text> : null}
                     </View>
                     <Input label="Linked job ID (optional)" placeholder="Enter a job number" keyboardType="number-pad" value={form.job_id} onChangeText={(value) => setForm((current) => ({ ...current, job_id: value }))} />
-                    <Input label="Date *" placeholder="YYYY-MM-DD" value={form.date} onChangeText={(value) => setForm((current) => ({ ...current, date: value }))} />
+                    <View>
+                      <Text style={{ color: t.sub, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>Date *</Text>
+                      <Pressable onPress={() => setShowDatePicker(true)} style={{ borderWidth: 1, borderColor: t.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, backgroundColor: t.card }}>
+                        <Text style={{ color: t.text, fontSize: 14 }}>{form.date}</Text>
+                      </Pressable>
+                      {showDatePicker ? (
+                        <DateTimePicker
+                          value={parseISO(form.date)}
+                          mode="date"
+                          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                          onChange={(_, selected) => {
+                            if (Platform.OS !== 'ios') setShowDatePicker(false);
+                            if (selected) setForm((current) => ({ ...current, date: format(selected, 'yyyy-MM-dd') }));
+                          }}
+                        />
+                      ) : null}
+                    </View>
                     <Input label="Description *" placeholder="Describe the work performed" multiline numberOfLines={4} value={form.description} onChangeText={(value) => setForm((current) => ({ ...current, description: value }))} />
                     <View style={{ flexDirection: 'row', gap: 9 }}>
                       <Button style={{ flex: 1 }} variant="outline" onPress={() => setShowAdd(false)}>Cancel</Button>

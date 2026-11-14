@@ -67,6 +67,7 @@ export default function NotificationsScreen() {
     const Icon = KIND_ICONS[item.kind] ?? Bell;
     const selected = selectedIds.includes(item.id);
     return (
+      <View style={{ width: '100%', paddingHorizontal: 18, marginBottom: 9 }}>
       <Pressable
         onPress={() => openNotification(item)}
         onLongPress={() => {
@@ -79,8 +80,6 @@ export default function NotificationsScreen() {
           flexDirection: 'row',
           alignItems: 'flex-start',
           gap: 11,
-          marginHorizontal: 18,
-          marginBottom: 9,
           padding: 13,
           borderRadius: 18,
           borderWidth: 1,
@@ -104,6 +103,7 @@ export default function NotificationsScreen() {
           </View>
         ) : null}
       </Pressable>
+      </View>
     );
   };
 

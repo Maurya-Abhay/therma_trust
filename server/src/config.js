@@ -25,9 +25,13 @@ export const config = {
   accessTtlSeconds: 8 * 60 * 60,
   refreshTtlSeconds: 7 * 24 * 60 * 60,
   corsOrigins: list(env.CORS_ALLOWED_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173"),
-  frontendUrl: (env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, ""),
+  frontendUrl: (env.FRONTEND_URL || "https://therma-trust-amber.vercel.app").replace(/\/$/, ""),
   publicApiUrl: (env.PUBLIC_API_URL || "").replace(/\/$/, ""),
   uploadDir: env.UPLOAD_DIR || "uploads",
+  imagekit: {
+    privateKey: env.IMAGEKIT_PRIVATE_KEY || "",
+    urlEndpoint: (env.IMAGEKIT_URL_ENDPOINT || "").replace(/\/$/, ""),
+  },
   smtp: {
     host: env.SMTP_HOST || "",
     port: Number(env.SMTP_PORT || 587),

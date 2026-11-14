@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { ClipboardCheck, FileQuestion, Target } from 'lucide-react-native';
+import { ChevronRight, ClipboardCheck, FileQuestion, Target } from 'lucide-react-native';
 import { fetchAssessments } from '@/src/api/endpoints';
 import { Assessment } from '@/src/types/api';
 import { ScreenContainer } from '@/src/components/layout/ScreenContainer';
@@ -32,13 +32,19 @@ export default function AssessmentsScreen() {
   const filtered = assessments.filter((item) => category === 'all' || item.capability_type === category);
   const showLoadError = isError && assessments.length === 0;
   const renderAssessment = ({ item }: { item: Assessment }) => (
-    <Surface onPress={() => router.push(`/app/technician/assessments/${item.id}` as any)} style={{ marginHorizontal: 18, marginBottom: 10, padding: 14 }}>
+    <View style={{ width: '100%', paddingHorizontal: 18, marginBottom: 12 }}>
+    <Surface onPress={() => router.push(`/app/technician/assessments/${item.id}` as any)} style={{ width: '100%', padding: 16, borderLeftWidth: 3, borderLeftColor: t.primary }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <IconBadge Icon={ClipboardCheck} size={42} />
         <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
           <Text numberOfLines={2} style={{ color: t.text, fontSize: 14, fontWeight: '800' }}>{item.title}</Text>
           <Text numberOfLines={1} style={{ color: t.sub, fontSize: 11 }}>{item.target_label}</Text>
         </View>
+        <ChevronRight size={19} color={t.primary} />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 13 }}>
+        <Pill text="Ready to start" tone="ok" />
+        <Text style={{ color: t.primary, fontSize: 12, fontWeight: '800' }}>Open assessment</Text>
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.line }}>
         <Pill text={item.capability_type} tone="info" />
@@ -47,6 +53,7 @@ export default function AssessmentsScreen() {
         <Pill text={`~${Math.ceil(item.questions.length * 1.5)} min`} tone="primary" />
       </View>
     </Surface>
+    </View>
   );
 
   return (

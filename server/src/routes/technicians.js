@@ -9,7 +9,7 @@ import { constantTimeEqual } from "../lib/security.js";
 import { validateBody } from "../lib/validate.js";
 import { authenticate } from "../middleware/auth.js";
 import { limiter } from "../middleware/throttle.js";
-import { multipart, readUpload, storeUpload } from "../middleware/upload.js";
+import { MAX_FILE_BYTES, multipart, readUpload, storeUpload } from "../middleware/upload.js";
 import {
   CapabilitySkill, ContractorCompany, Credential, Facility, JobAssignment, JobRequest, RefrigerantType, TechnicianProfile, User,
   WorkHistoryEntry, fullNameOf, isAdmin,
@@ -163,8 +163,8 @@ router.get("/credentials", async (req, res) => {
 router.post("/credentials", multipart.single("file"), async (req, res) => {
   const data = validateBody(blankToNull(req.body), CREDENTIAL_SPEC);
   if (!req.file) throw validationError({ file: "No file was submitted." });
-  if (req.file.size > ocr.MAX_UPLOAD_BYTES || !ocr.detectMediaType(req.file.buffer)) {
-    throw validationError({ file: "Upload a PDF or JPEG, PNG, GIF or WebP image no larger than 5 MB." });
+  if (req.file.size > MAX_FILE_BYTES || !ocr.detectMediaType(req.file.buffer)) {
+    throw validationError({ file: "Upload a PDF or JPEG, PNG, GIF or WebP image no larger than 1 MB." });
   }
   await requireTechnicianExists(data.technician);
   await assertCanWriteTechnicianData(req.user, data.technician);
@@ -178,7 +178,7 @@ router.post("/credentials", multipart.single("file"), async (req, res) => {
 router.post("/credentials/extract", limiter("credential_ocr"), multipart.single("file"), async (req, res) => {
   if (req.user.role !== "technician") throw forbidden("Only technicians can scan their own credentials.");
   if (!req.file) throw new ApiError(400, { detail: "Attach a file to scan." });
-  if (req.file.size > ocr.MAX_UPLOAD_BYTES) throw new ApiError(400, { detail: "That file is too large to scan (limit 5 MB)." });
+  if (req.file.size > MAX_FILE_BYTES) throw new ApiError(400, { detail: "That file is too large to scan (limit 1 MB)." });
 
   const mediaType = ocr.detectMediaType(req.file.buffer);
   if (!mediaType) throw new ApiError(400, { detail: "Upload a PDF or a JPEG, PNG, GIF or WebP image." });
@@ -207,8 +207,8 @@ async function updateCredential(req, res, partial) {
     await assertCanWriteTechnicianData(req.user, data.technician);
   }
   if (req.file) {
-    if (req.file.size > ocr.MAX_UPLOAD_BYTES || !ocr.detectMediaType(req.file.buffer)) {
-      throw validationError({ file: "Upload a PDF or JPEG, PNG, GIF or WebP image no larger than 5 MB." });
+    if (req.file.size > MAX_FILE_BYTES || !ocr.detectMediaType(req.file.buffer)) {
+      throw validationError({ file: "Upload a PDF or JPEG, PNG, GIF or WebP image no larger than 1 MB." });
     }
     data.file = await storeUpload("credentials", req.file);
   }

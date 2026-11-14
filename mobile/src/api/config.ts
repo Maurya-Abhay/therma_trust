@@ -12,7 +12,7 @@ if (!configuredUrl && !isDevelopment) {
 }
 
 export const API_BASE_URL = String(configuredUrl || 'http://localhost:8000/api').replace(/\/+$/, '');
-export const PUBLIC_WEB_BASE_URL = String(configuredWebUrl || 'https://thermatrust.app').replace(/\/+$/, '');
+export const PUBLIC_WEB_BASE_URL = String(configuredWebUrl || 'https://therma-trust-amber.vercel.app').replace(/\/+$/, '');
 
 if (!isDevelopment) {
   const apiUrl = new URL(API_BASE_URL);

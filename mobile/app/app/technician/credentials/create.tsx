@@ -13,6 +13,8 @@ import { IconBadge, Pill, Section, Surface } from '@/src/components/ui/kit';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type CredentialForm = {
   name: string;
@@ -24,6 +26,7 @@ type CredentialForm = {
 };
 type UploadFile = { uri: string; name: string; type: string };
 type FormField = keyof CredentialForm;
+const MAX_FILE_BYTES = 1024 * 1024;
 
 const INITIAL_FORM: CredentialForm = {
   name: '',
@@ -44,6 +47,7 @@ export default function CreateCredentialScreen() {
   const [extractedData, setExtractedData] = useState<ExtractedCredentialFields | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extractionError, setExtractionError] = useState<string | null>(null);
+  const [dateField, setDateField] = useState<'issue_date' | 'expiry_date' | null>(null);
 
   const createMutation = useMutation({
     mutationFn: () => {
@@ -96,6 +100,10 @@ export default function CreateCredentialScreen() {
       });
       if (result.canceled || !result.assets[0]) return;
       const asset = result.assets[0];
+      if (asset.size && asset.size > MAX_FILE_BYTES) {
+        Alert.alert('File too large', 'Choose a document smaller than 1 MB.');
+        return;
+      }
       const file: UploadFile = { uri: asset.uri, name: asset.name, type: asset.mimeType || 'application/octet-stream' };
       setSelectedFile(file);
       await extractFromFile(file);
@@ -108,7 +116,17 @@ export default function CreateCredentialScreen() {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 });
       if (result.canceled || !result.assets[0]) return;
-      const file: UploadFile = { uri: result.assets[0].uri, name: 'credential.jpg', type: result.assets[0].mimeType || 'image/jpeg' };
+      const compressed = await ImageManipulator.manipulateAsync(
+        result.assets[0].uri,
+        [{ resize: { width: 1600 } }],
+        { compress: 0.65, format: ImageManipulator.SaveFormat.JPEG },
+      );
+      const size = (await fetch(compressed.uri)).headers.get('content-length');
+      if (size && Number(size) > MAX_FILE_BYTES) {
+        Alert.alert('Image too large', 'Choose a clearer photo with less background, or crop the document before uploading.');
+        return;
+      }
+      const file: UploadFile = { uri: compressed.uri, name: 'credential.jpg', type: 'image/jpeg' };
       setSelectedFile(file);
       await extractFromFile(file);
     } catch (error) {
@@ -192,8 +210,26 @@ export default function CreateCredentialScreen() {
             <Input label="Credential name *" placeholder="e.g. EPA 608 Universal" value={form.name} onChangeText={(value) => updateField('name', value)} error={errors.name} />
             <Input label="Issuer *" placeholder="e.g. ESCO Institute" value={form.issuer_name} onChangeText={(value) => updateField('issuer_name', value)} error={errors.issuer_name} />
             <Input label="Credential number *" placeholder="Enter the number shown on the certificate" value={form.credential_number} onChangeText={(value) => updateField('credential_number', value)} error={errors.credential_number} />
-            <Input label="Issue date" placeholder="YYYY-MM-DD" value={form.issue_date} onChangeText={(value) => updateField('issue_date', value)} error={errors.issue_date} />
-            <Input label="Expiry date" placeholder="YYYY-MM-DD" value={form.expiry_date} onChangeText={(value) => updateField('expiry_date', value)} error={errors.expiry_date} />
+            {(['issue_date', 'expiry_date'] as const).map((field) => (
+              <View key={field}>
+                <Text style={{ color: t.sub, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>{field === 'issue_date' ? 'Issue date' : 'Expiry date'}</Text>
+                <Pressable onPress={() => setDateField(field)} style={{ borderWidth: 1, borderColor: errors[field] ? t.bad : t.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, backgroundColor: t.card }}>
+                  <Text style={{ color: form[field] ? t.text : t.sub, fontSize: 14 }}>{form[field] || 'Select date'}</Text>
+                </Pressable>
+                {errors[field] ? <Text style={{ color: t.bad, fontSize: 11, marginTop: 5 }}>{errors[field]}</Text> : null}
+                {dateField === field ? (
+                  <DateTimePicker
+                    value={form[field] ? parseISO(form[field]) : new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(_, selected) => {
+                      if (Platform.OS !== 'ios') setDateField(null);
+                      if (selected) updateField(field, format(selected, 'yyyy-MM-dd'));
+                    }}
+                  />
+                ) : null}
+              </View>
+            ))}
             <Input label="Notes" placeholder="Additional information (optional)" multiline numberOfLines={3} value={form.notes} onChangeText={(value) => updateField('notes', value)} />
             <Button fullWidth loading={createMutation.isPending} disabled={extracting} onPress={submit}>Submit for review</Button>
           </Surface>

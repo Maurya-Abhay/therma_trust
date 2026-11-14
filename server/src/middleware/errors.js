@@ -25,7 +25,7 @@ export function errorHandler(error, req, res, _next) {
     return res.status(400).json({ [field]: ["A record with this value already exists."] });
   }
   if (error?.name === "MulterError") {
-    const detail = error.code === "LIMIT_FILE_SIZE" ? "That file is too large (limit 10 MB)." : "The upload could not be read.";
+    const detail = error.code === "LIMIT_FILE_SIZE" ? "That file is too large (limit 1 MB)." : "The upload could not be read.";
     return res.status(400).json({ detail });
   }
 

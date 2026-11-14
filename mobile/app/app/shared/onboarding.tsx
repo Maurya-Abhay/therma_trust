@@ -9,10 +9,12 @@ import { Chip } from '@/src/components/ui/Chip';
 import { Button } from '@/src/components/ui/Button';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/auth/AuthContext';
+import { useTheme } from '@/src/theme/ThemeProvider';
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useTheme();
   const [checklist, setChecklist] = useState<OnboardingChecklist | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -74,7 +76,7 @@ export default function OnboardingScreen() {
     return (
       <ScreenContainer headerTitle="Onboarding">
         <View style={styles.loading}>
-          <Text className="text-surface-500">Loading...</Text>
+          <Text style={{ color: t.sub }}>Loading...</Text>
         </View>
       </ScreenContainer>
     );
@@ -84,7 +86,7 @@ export default function OnboardingScreen() {
     return (
       <ScreenContainer headerTitle="Onboarding">
         <View style={styles.empty}>
-          <Text className="text-surface-600 text-center">Could not load onboarding data.</Text>
+          <Text style={{ color: t.sub, textAlign: 'center' }}>Could not load onboarding data.</Text>
           <Button variant="outline" onPress={() => { void refetch(); }}>Try again</Button>
         </View>
       </ScreenContainer>
@@ -95,7 +97,7 @@ export default function OnboardingScreen() {
     return (
       <ScreenContainer headerTitle="Onboarding">
         <View style={styles.empty}>
-          <Text className="text-surface-600 text-center">No onboarding data</Text>
+          <Text style={{ color: t.sub, textAlign: 'center' }}>No onboarding data</Text>
         </View>
       </ScreenContainer>
     );
@@ -107,18 +109,15 @@ export default function OnboardingScreen() {
     <ScreenContainer headerTitle="Onboarding Checklist" headerSubtitle={`${checklist.completed}/${checklist.total} completed`}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Progress */}
-        <Card style={styles.progressCard}>
+        <Card style={[styles.progressCard, { backgroundColor: t.card, borderColor: t.line }]}>
           <CardContent>
             <View style={styles.progressRow}>
-              <View style={styles.progressBarContainer}>
-                <View style={[
-                  styles.progressBar,
-                  { width: `${progress}%` },
-                ]} />
+              <View style={[styles.progressBarContainer, { backgroundColor: t.field }]}>
+                <View style={[styles.progressBar, { width: `${progress}%`, backgroundColor: t.primary }]} />
               </View>
-              <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+              <Text style={[styles.progressText, { color: t.primary }]}>{Math.round(progress)}%</Text>
             </View>
-            <Text style={styles.progressLabel}>{checklist.completed} of {checklist.total} steps completed</Text>
+            <Text style={[styles.progressLabel, { color: t.sub }]}>{checklist.completed} of {checklist.total} steps completed</Text>
           </CardContent>
         </Card>
 
@@ -127,22 +126,19 @@ export default function OnboardingScreen() {
           {checklist.steps.map((step, i) => (
             <TouchableOpacity
               key={step.id}
-              style={[
-                styles.stepCard,
-                step.done && styles.stepDone,
-              ]}
+              style={[styles.stepCard, { backgroundColor: step.done ? t.okBg : t.card, borderColor: step.done ? t.okBg : t.line }]}
               onPress={() => handleStepPress(step)}
             >
-              <View style={styles.stepIcon}>
+              <View style={[styles.stepIcon, { backgroundColor: step.done ? t.okBg : t.field }]}>
                 {step.done ? (
-                  <Text style={styles.checkIcon}>✓</Text>
+                  <Text style={[styles.checkIcon, { color: t.ok }]}>✓</Text>
                 ) : (
-                  <Text style={styles.stepNumber}>{i + 1}</Text>
+                  <Text style={[styles.stepNumber, { color: t.primary }]}>{i + 1}</Text>
                 )}
               </View>
               <View style={styles.stepInfo}>
-                <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepStatus}>
+                <Text style={[styles.stepTitle, { color: t.text }]}>{step.title}</Text>
+                <Text style={[styles.stepStatus, { color: t.sub }]}>
                   {step.done ? 'Completed' : 'Tap to start'}
                 </Text>
               </View>
@@ -154,12 +150,12 @@ export default function OnboardingScreen() {
         </View>
 
         {checklist.completed === checklist.total && (
-          <Card style={styles.completeCard}>
+          <Card style={[styles.completeCard, { backgroundColor: t.okBg, borderColor: t.okBg }]}>
             <CardContent>
               <View style={styles.completeContent}>
                 <Text className="text-4xl mb-3">🎉</Text>
-                <Text style={styles.completeTitle}>All Done!</Text>
-                <Text style={styles.completeText}>You've completed all onboarding steps. Welcome to ThermaTrust!</Text>
+                <Text style={[styles.completeTitle, { color: t.ok }]}>All Done!</Text>
+                <Text style={[styles.completeText, { color: t.ok }]}>You've completed all onboarding steps. Welcome to ThermaTrust!</Text>
               </View>
             </CardContent>
           </Card>

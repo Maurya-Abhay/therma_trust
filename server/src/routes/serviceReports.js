@@ -6,7 +6,7 @@ import { getScoped, sendPdf } from "../lib/http.js";
 import { allOf, filtersFrom, paginate } from "../lib/pagination.js";
 import { validateBody } from "../lib/validate.js";
 import { authenticate } from "../middleware/auth.js";
-import { multipart, storeUpload } from "../middleware/upload.js";
+import { MAX_FILE_BYTES, multipart, storeUpload } from "../middleware/upload.js";
 import {
   ContractorCompany, CylinderTransaction, Equipment, Facility, JobAssignment, JobRequest, RefrigerantCylinder,
   RefrigerantType, ServiceReport, ServiceReportPhoto, TechnicianProfile, User, byId, fullNameOf, isAdmin,
@@ -262,6 +262,7 @@ router.post("/service-report-photos", multipart.single("image"), async (req, res
     is_before: { type: "bool", default: true },
   });
   if (!req.file) throw validationError({ image: "No file was submitted." });
+  if (req.file.size > MAX_FILE_BYTES) throw validationError({ image: "Image must be no larger than 1 MB." });
   if (!IMAGE_TYPES.has(detectMediaType(req.file.buffer))) {
     throw validationError({
       image: "Upload a valid image. The file you uploaded was either not an image or a corrupted image.",
